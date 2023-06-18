@@ -1,0 +1,419 @@
+### A-01 계좌 생성
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.global.set("accountId-01", response.body.accountId);
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### A-02 계좌 인증
+
+< {%
+    request.variables.set("accountId-01", client.global.get("accountId-01"))
+%}
+PUT http://127.0.0.1:8080/v1/accounts/{{accountId-01}}/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### A-03 계좌 동결
+
+< {%
+    request.variables.set("accountId-01", client.global.get("accountId-01"))
+%}
+PUT http://127.0.0.1:8080/v1/accounts/{{accountId-01}}/frozen
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### A-04 계좌 동결 성공
+
+< {%
+    request.variables.set("accountId-01", client.global.get("accountId-01"))
+%}
+GET http://127.0.0.1:8080/v1/accounts/{{accountId-01}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("frozen true", function () {
+        client.assert(response.status === 200);
+        client.assert(response.body.isFrozen === true);
+    });
+%}
+
+
+#################
+#################
+#################
+
+
+### B-01 계좌 생성
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.global.set("accountId-02", response.body.accountId);
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### B-02 계좌 입금
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 1200.56
+}
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### B-03 계좌 인증
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+PUT http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### B-04 계좌 동결
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+PUT http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/frozen
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+### B-05 계좌 동결 상태 확인
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+GET http://127.0.0.1:8080/v1/accounts/{{accountId-02}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+        client.assert(response.body.isFrozen === true);
+    });
+%}
+
+
+### B-06 계좌 출금 시도
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 500
+}
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### B-07 계좌 출금 시도
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+GET http://127.0.0.1:8080/v1/accounts/{{accountId-02}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("B-07 계좌 출금 성공", function () {
+        client.assert(response.status === 200);
+        client.assert(response.body.isFrozen === false);
+        client.assert(response.body.isVerified === true);
+        client.assert(response.body.isClosed === false);
+        client.assert(response.body.balance === 700.56);
+    });
+%}
+
+
+### B-08 계좌 중지
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+PUT http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/closed
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### B-09 계좌 출금 시도
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 100
+}
+
+> {%
+    client.test("계좌 출금 실패", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### B-10 계좌 출금 실패
+
+< {%
+    request.variables.set("accountId-02", client.global.get("accountId-02"))
+%}
+GET http://127.0.0.1:8080/v1/accounts/{{accountId-02}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("계좌 출금 실패", function () {
+        client.assert(response.status === 200);
+        client.assert(response.body.isFrozen === false);
+        client.assert(response.body.isVerified === true);
+        client.assert(response.body.isClosed === true);
+        client.assert(response.body.balance === 700.56);
+    });
+%}
+
+
+
+#################
+#################
+#################
+
+
+### C-01 계좌 생성
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.global.set("accountId-03", response.body.accountId);
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### C-02 계좌 입금
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 500
+}
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+### C-03 계좌 입금
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 200
+}
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+### C-04 계좌 출금 시도
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 701
+}
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### C-05 계좌 인증
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+PUT http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### C-06 계좌 출금 시도
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 701
+}
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 500);
+    });
+%}
+
+
+### C-07 계좌 출금 실패
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+GET http://127.0.0.1:8080/v1/accounts/{{accountId-03}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("계좌 출금 실패", function () {
+        client.assert(response.status === 200);
+        client.assert(response.body.isFrozen === false);
+        client.assert(response.body.isVerified === true);
+        client.assert(response.body.isClosed === false);
+        client.assert(response.body.balance === 700);
+    });
+%}
+
+
+
+### C-08 계좌 출금 시도
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 700
+}
+
+> {%
+    client.test("성공", function () {
+        client.assert(response.status === 200);
+    });
+%}
+
+
+### C-09 계좌 출금 실패
+
+< {%
+    request.variables.set("accountId-03", client.global.get("accountId-03"))
+%}
+GET http://127.0.0.1:8080/v1/accounts/{{accountId-03}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("계좌 출금 실패", function () {
+        client.assert(response.status === 200);
+        client.assert(response.body.isFrozen === false);
+        client.assert(response.body.isVerified === true);
+        client.assert(response.body.isClosed === false);
+        client.assert(response.body.balance === 0);
+    });
+%}
