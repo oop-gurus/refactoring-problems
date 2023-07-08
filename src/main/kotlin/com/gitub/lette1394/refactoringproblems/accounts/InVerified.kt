@@ -1,23 +1,26 @@
 package com.gitub.lette1394.refactoringproblems.accounts
 
-class Created: AccountState {
+class InVerified: AccountState {
   override fun verify(onVerify: () -> Any): AccountState {
-    return this
+    onVerify()
+    return Verified()
   }
 
   override fun freeze(onFreeze: () -> Any): AccountState {
-    return this
+    throw RuntimeException("Account is inverified")
   }
 
   override fun close(onClose: () -> Any): AccountState {
-    return this
+    onClose()
+    return Closed()
   }
 
   override fun withdraw(onWithdraw: () -> Any): AccountState {
-    return this
+    throw RuntimeException("Account is inverified")
   }
 
   override fun deposit(onDeposit: () -> Any): AccountState {
+    onDeposit()
     return this
   }
 
