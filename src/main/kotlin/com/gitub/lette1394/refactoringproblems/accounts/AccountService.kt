@@ -67,13 +67,19 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        var accountState = when(accountEntity.isVerified) {
-            true -> Verified()
-            false -> InVerified()
-        }
-
-        if (accountEntity.isClosed) {
-            accountState = accountState.close{ }
+        // 결국 if else 가 생기는데...
+        // enum으로 묶고 싶어도 그걸 분기할 때, if else 가 생기고..
+        // 이걸 when 으로 풀려해도 어딘가에는 if else 가 생길듯
+        // 그래도 로직이 if else 된게 아닌, 상태를 정의하는게 if else 라 복잡성이라 보기는 좀 그런가..?
+        // 그 차이를 잘 모르겠네...
+        // 그냥 어떻게 적용해서 써야할지 전혀 모르겠다... 심플한 것부터 하면 감 좀 잡을 수 있을 거 같은데..
+        // 공존 가능한 상태도 있고, 각 flow 가 다다르니 감이 하나도 안잡히네..
+        val accountState = if(!accountEntity.isVerified) {
+            InVerified()
+        } else if(accountEntity.isClosed) {
+            Closed()
+        } else {
+            Verified()
         }
 
         accountState.freeze {
@@ -92,20 +98,27 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 입금할 수 없습니다. 요청을 무시합니다." }
-            return
+        val accountState = if(accountEntity.isClosed) {
+            Closed()
+        } else if(!accountEntity.isVerified) {
+            InVerified()
+        } else {
+            Verified()
         }
-        if (accountEntity.isFrozen) {
-            accountEntity.isFrozen = false
-            accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountId,
-                    isFrozen = false,
-                ),
-            )
+
+        accountState.deposit {
+            accountEntity.balance = accountEntity.balance.add(amount)
+
+            if (accountEntity.isFrozen) {
+                accountEntity.isFrozen = false
+                accountNotificationApi.notifyChangedToFrozen(
+                    AccountFrozenChangedRequest(
+                        accountId = accountId,
+                        isFrozen = false,
+                    ),
+                )
+            }
         }
-        accountEntity.balance = accountEntity.balance.add(amount)
     }
 
     @Transactional
@@ -113,28 +126,31 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        if (!accountEntity.isVerified) {
-            log.info { "확인되지 않은 계좌는 출금할 수 없습니다. 요청을 무시합니다." }
-            return
+        val accountState = if(!accountEntity.isVerified) {
+            InVerified()
+        } else if(accountEntity.isClosed) {
+            Closed()
+        } else {
+            Verified()
         }
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 출금할 수 없습니다. 요청을 무시합니다." }
-            return
+
+        accountState.withdraw {
+            val subtracted = accountEntity.balance.subtract(amount)
+            if (subtracted < BigDecimal.ZERO) {
+                log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
+                throw IllegalArgumentException("잔액이 부족합니다. 출금할 수 없습니다.")
+            }
+            accountEntity.balance = subtracted
+
+            if (accountEntity.isFrozen) {
+                accountEntity.isFrozen = false
+                accountNotificationApi.notifyChangedToFrozen(
+                    AccountFrozenChangedRequest(
+                        accountId = accountId,
+                        isFrozen = false,
+                    ),
+                )
+            }
         }
-        if (accountEntity.isFrozen) {
-            accountEntity.isFrozen = false
-            accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountId,
-                    isFrozen = false,
-                ),
-            )
-        }
-        val subtracted = accountEntity.balance.subtract(amount)
-        if (subtracted < BigDecimal.ZERO) {
-            log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
-            throw IllegalArgumentException("잔액이 부족합니다. 출금할 수 없습니다.")
-        }
-        accountEntity.balance = subtracted
     }
 }

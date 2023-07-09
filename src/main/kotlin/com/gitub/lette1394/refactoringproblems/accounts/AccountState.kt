@@ -7,10 +7,9 @@ interface AccountState {
   val log: KLogger
     get() = KotlinLogging.logger {}
 
-  fun verify(onVerify: () -> Any): AccountState;
-  fun freeze(onFreeze: () -> Any): AccountState;
-  fun close(onClose: () -> Any): AccountState;
-  fun withdraw(onWithdraw: () -> Any): AccountState;
-  fun deposit(onDeposit: () -> Any): AccountState;
-  fun snapshot(): AccountSnapshot;
+  fun verify(onVerify: () -> Any)
+  fun freeze(onFreeze: () -> Any)
+  fun close(onClose: () -> Any)
+  fun withdraw(onWithdraw: () -> Any)
+  fun deposit(onDeposit: () -> Any)
 }
