@@ -7,6 +7,7 @@ class InVerified: AccountState {
   }
 
   override fun freeze(onFreeze: () -> Any): AccountState {
+    log.info { "확인되지 않은 계좌는 동결할 수 없습니다. 요청을 무시합니다." }
     throw RuntimeException("Account is inverified")
   }
 
@@ -16,6 +17,7 @@ class InVerified: AccountState {
   }
 
   override fun withdraw(onWithdraw: () -> Any): AccountState {
+    log.info { "확인되지 않은 계좌는 출금할 수 없습니다. 요청을 무시합니다." }
     throw RuntimeException("Account is inverified")
   }
 

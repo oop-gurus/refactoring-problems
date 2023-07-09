@@ -67,21 +67,24 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        if (!accountEntity.isVerified) {
-            log.info { "확인되지 않은 계좌는 동결할 수 없습니다. 요청을 무시합니다." }
-            return
+        var accountState = when(accountEntity.isVerified) {
+            true -> Verified()
+            false -> InVerified()
         }
+
         if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 동결할 수 없습니다. 요청을 무시합니다." }
-            return
+            accountState = accountState.close{ }
         }
-        accountEntity.isFrozen = true
-        accountNotificationApi.notifyChangedToFrozen(
-            AccountFrozenChangedRequest(
-                accountId = accountId,
-                isFrozen = true,
-            ),
-        )
+
+        accountState.freeze {
+            accountEntity.isFrozen = true
+            accountNotificationApi.notifyChangedToFrozen(
+                AccountFrozenChangedRequest(
+                    accountId = accountId,
+                    isFrozen = true,
+                ),
+            )
+        }
     }
 
     @Transactional
