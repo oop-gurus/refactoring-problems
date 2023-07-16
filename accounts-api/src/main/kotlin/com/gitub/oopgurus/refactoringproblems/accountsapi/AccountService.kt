@@ -126,6 +126,8 @@ class AccountService(
                     isFrozen = false,
                 ),
             )
+        } else {
+            // do nothing
         }
         val subtracted = accountEntity.balance.subtract(amount)
         if (subtracted < BigDecimal.ZERO) {
