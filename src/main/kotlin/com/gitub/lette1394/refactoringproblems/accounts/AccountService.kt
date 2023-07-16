@@ -7,131 +7,103 @@ import java.math.BigDecimal
 
 @Service
 class AccountService(
-    private val accountRepository: AccountRepository,
-    private val accountNotificationApi: AccountNotificationApi,
+        private val accountRepository: AccountRepository,
+        private val accountNotificationApi: AccountNotificationApi,
 ) {
     private val log = KotlinLogging.logger {}
 
     @Transactional
     fun createAccount(): Account {
         val accountEntity = accountRepository.save(
-            AccountEntity(
-                isVerified = false,
-                isClosed = false,
-                isFrozen = false,
-                balance = BigDecimal.ZERO,
-            )
+                AccountEntity(
+                        isVerified = false,
+                        isClosed = false,
+                        isFrozen = false,
+                        balance = BigDecimal.ZERO,
+                )
         )
 
-        return Account(
-            accountId = accountEntity.id,
-            isVerified = accountEntity.isVerified,
-            isClosed = accountEntity.isClosed,
-            isFrozen = accountEntity.isFrozen,
-            balance = accountEntity.balance,
-        )
+        return AccountMapper.toAccount(accountEntity)
     }
 
     @Transactional
     fun getAccount(accountId: Long): Account {
         val accountEntity = accountRepository.findById(accountId)
-            .orElseThrow { throw RuntimeException("Account not found") }
+                .orElseThrow { throw RuntimeException("Account not found") }
 
-        return Account(
-            accountId = accountId,
-            isVerified = accountEntity.isVerified,
-            isClosed = accountEntity.isClosed,
-            isFrozen = accountEntity.isFrozen,
-            balance = accountEntity.balance,
-        )
+        return AccountMapper.toAccount(accountEntity)
     }
 
     @Transactional
     fun holderVerified(accountId: Long) {
         val accountEntity = accountRepository.findById(accountId)
-            .orElseThrow { throw RuntimeException("Account not found") }
+                .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        accountEntity.isVerified = true
+        account.verify { accountEntity.isVerified = true }
     }
 
     @Transactional
     fun closeAccount(accountId: Long) {
         val accountEntity = accountRepository.findById(accountId)
-            .orElseThrow { throw RuntimeException("Account not found") }
+                .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        accountEntity.isClosed = true
+        account.verify { accountEntity.isClosed = true }
     }
 
     @Transactional
     fun freezeAccount(accountId: Long) {
         val accountEntity = accountRepository.findById(accountId)
-            .orElseThrow { throw RuntimeException("Account not found") }
+                .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        if (!accountEntity.isVerified) {
-            log.info { "확인되지 않은 계좌는 동결할 수 없습니다. 요청을 무시합니다." }
-            return
+        account.freeze {
+            accountEntity.isFrozen = true
+            accountNotificationApi.notifyChangedToFrozen(
+                    AccountFrozenChangedRequest(
+                            accountId = accountId,
+                            isFrozen = true,
+                    ),
+            )
         }
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 동결할 수 없습니다. 요청을 무시합니다." }
-            return
-        }
-        accountEntity.isFrozen = true
-        accountNotificationApi.notifyChangedToFrozen(
-            AccountFrozenChangedRequest(
-                accountId = accountId,
-                isFrozen = true,
-            ),
-        )
     }
 
     @Transactional
     fun deposit(accountId: Long, amount: BigDecimal) {
         val accountEntity = accountRepository.findById(accountId)
-            .orElseThrow { throw RuntimeException("Account not found") }
+                .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 입금할 수 없습니다. 요청을 무시합니다." }
-            return
-        }
-        if (accountEntity.isFrozen) {
+        account.deposit { accountEntity.balance = accountEntity.balance.add(amount) }
+
+        account.melt {
             accountEntity.isFrozen = false
             accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountId,
-                    isFrozen = false,
-                ),
+                    AccountFrozenChangedRequest(
+                            accountId = accountId,
+                            isFrozen = false,
+                    ),
             )
         }
-        accountEntity.balance = accountEntity.balance.add(amount)
     }
 
     @Transactional
     fun withdraw(accountId: Long, amount: BigDecimal) {
         val accountEntity = accountRepository.findById(accountId)
-            .orElseThrow { throw RuntimeException("Account not found") }
+                .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        if (!accountEntity.isVerified) {
-            log.info { "확인되지 않은 계좌는 출금할 수 없습니다. 요청을 무시합니다." }
-            return
-        }
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 출금할 수 없습니다. 요청을 무시합니다." }
-            return
-        }
-        if (accountEntity.isFrozen) {
+        account.withdraw { accountEntity.balance = WithdrawCalculator.calculate(accountEntity.balance, amount) }
+
+        account.melt {
             accountEntity.isFrozen = false
             accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountId,
-                    isFrozen = false,
-                ),
+                    AccountFrozenChangedRequest(
+                            accountId = accountId,
+                            isFrozen = false,
+                    ),
             )
         }
-        val subtracted = accountEntity.balance.subtract(amount)
-        if (subtracted < BigDecimal.ZERO) {
-            log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
-            throw IllegalArgumentException("잔액이 부족합니다. 출금할 수 없습니다.")
-        }
-        accountEntity.balance = subtracted
     }
 }

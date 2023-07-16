@@ -14,9 +14,6 @@ Content-Type: application/json
 
 ### A-02 계좌 인증
 
-< {%
-    request.variables.set("accountId-01", client.global.get("accountId-01"))
-%}
 PUT http://127.0.0.1:8080/v1/accounts/{{accountId-01}}/holder-verified
 Accept: application/json
 Content-Type: application/json
@@ -30,9 +27,6 @@ Content-Type: application/json
 
 ### A-03 계좌 동결
 
-< {%
-    request.variables.set("accountId-01", client.global.get("accountId-01"))
-%}
 PUT http://127.0.0.1:8080/v1/accounts/{{accountId-01}}/frozen
 Accept: application/json
 Content-Type: application/json
@@ -46,9 +40,6 @@ Content-Type: application/json
 
 ### A-04 계좌 동결 성공
 
-< {%
-    request.variables.set("accountId-01", client.global.get("accountId-01"))
-%}
 GET http://127.0.0.1:8080/v1/accounts/{{accountId-01}}
 Accept: application/json
 Content-Type: application/json
@@ -82,9 +73,6 @@ Content-Type: application/json
 
 ### B-02 계좌 입금
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/deposit
 Accept: application/json
 Content-Type: application/json
@@ -102,9 +90,6 @@ Content-Type: application/json
 
 ### B-03 계좌 인증
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 PUT http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/holder-verified
 Accept: application/json
 Content-Type: application/json
@@ -118,9 +103,6 @@ Content-Type: application/json
 
 ### B-04 계좌 동결
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 PUT http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/frozen
 Accept: application/json
 Content-Type: application/json
@@ -133,9 +115,6 @@ Content-Type: application/json
 
 ### B-05 계좌 동결 상태 확인
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 GET http://127.0.0.1:8080/v1/accounts/{{accountId-02}}
 Accept: application/json
 Content-Type: application/json
@@ -150,9 +129,6 @@ Content-Type: application/json
 
 ### B-06 계좌 출금 시도
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/withdraw
 Accept: application/json
 Content-Type: application/json
@@ -170,9 +146,6 @@ Content-Type: application/json
 
 ### B-07 계좌 출금 시도
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 GET http://127.0.0.1:8080/v1/accounts/{{accountId-02}}
 Accept: application/json
 Content-Type: application/json
@@ -190,9 +163,6 @@ Content-Type: application/json
 
 ### B-08 계좌 중지
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 PUT http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/closed
 Accept: application/json
 Content-Type: application/json
@@ -206,9 +176,6 @@ Content-Type: application/json
 
 ### B-09 계좌 출금 시도
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-02}}/withdraw
 Accept: application/json
 Content-Type: application/json
@@ -226,9 +193,6 @@ Content-Type: application/json
 
 ### B-10 계좌 출금 실패
 
-< {%
-    request.variables.set("accountId-02", client.global.get("accountId-02"))
-%}
 GET http://127.0.0.1:8080/v1/accounts/{{accountId-02}}
 Accept: application/json
 Content-Type: application/json
@@ -266,9 +230,6 @@ Content-Type: application/json
 
 ### C-02 계좌 입금
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/deposit
 Accept: application/json
 Content-Type: application/json
@@ -285,9 +246,6 @@ Content-Type: application/json
 
 ### C-03 계좌 입금
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/deposit
 Accept: application/json
 Content-Type: application/json
@@ -304,9 +262,6 @@ Content-Type: application/json
 
 ### C-04 계좌 출금 시도
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/withdraw
 Accept: application/json
 Content-Type: application/json
@@ -324,9 +279,6 @@ Content-Type: application/json
 
 ### C-05 계좌 인증
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 PUT http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/holder-verified
 Accept: application/json
 Content-Type: application/json
@@ -340,9 +292,6 @@ Content-Type: application/json
 
 ### C-06 계좌 출금 시도
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/withdraw
 Accept: application/json
 Content-Type: application/json
@@ -360,9 +309,6 @@ Content-Type: application/json
 
 ### C-07 계좌 출금 실패
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 GET http://127.0.0.1:8080/v1/accounts/{{accountId-03}}
 Accept: application/json
 Content-Type: application/json
@@ -381,9 +327,6 @@ Content-Type: application/json
 
 ### C-08 계좌 출금 시도
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 POST http://127.0.0.1:8080/v1/accounts/{{accountId-03}}/withdraw
 Accept: application/json
 Content-Type: application/json
@@ -401,9 +344,6 @@ Content-Type: application/json
 
 ### C-09 계좌 출금 실패
 
-< {%
-    request.variables.set("accountId-03", client.global.get("accountId-03"))
-%}
 GET http://127.0.0.1:8080/v1/accounts/{{accountId-03}}
 Accept: application/json
 Content-Type: application/json
