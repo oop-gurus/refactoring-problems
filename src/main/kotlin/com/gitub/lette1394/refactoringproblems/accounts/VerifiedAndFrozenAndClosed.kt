@@ -7,6 +7,10 @@ class VerifiedAndFrozenAndClosed: AccountState {
   override fun freeze(onFreeze: () -> Unit) {
   }
 
+  override fun melt(onMelt: () -> Unit) {
+    onMelt()
+  }
+
   override fun close(onClose: () -> Unit) {
   }
 

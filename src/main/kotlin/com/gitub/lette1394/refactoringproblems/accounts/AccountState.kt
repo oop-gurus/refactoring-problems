@@ -9,6 +9,7 @@ interface AccountState {
 
   fun verify(onVerify: () -> Unit)
   fun freeze(onFreeze: () -> Unit)
+  fun melt(onMelt: () -> Unit)
   fun close(onClose: () -> Unit)
   fun withdraw(onWithdraw: () -> Unit)
   fun deposit(onDeposit: () -> Unit)

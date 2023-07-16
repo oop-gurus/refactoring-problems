@@ -8,6 +8,9 @@ class Verified: AccountState {
     onFreeze()
   }
 
+  override fun melt(onMelt: () -> Unit) {
+  }
+
   override fun close(onClose: () -> Unit) {
     onClose()
   }

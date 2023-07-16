@@ -1,22 +1,26 @@
 package com.gitub.lette1394.refactoringproblems.accounts
 
 class Frozen : AccountState {
-  override fun verify(onVerify: () -> Any) {
+  override fun verify(onVerify: () -> Unit) {
     onVerify()
   }
 
-  override fun freeze(onFreeze: () -> Any) {
+  override fun freeze(onFreeze: () -> Unit) {
   }
 
-  override fun close(onClose: () -> Any) {
+  override fun melt(onMelt: () -> Unit) {
+    onMelt()
+  }
+
+  override fun close(onClose: () -> Unit) {
     onClose()
   }
 
-  override fun withdraw(onWithdraw: () -> Any) {
+  override fun withdraw(onWithdraw: () -> Unit) {
     onWithdraw()
   }
 
-  override fun deposit(onDeposit: () -> Any) {
+  override fun deposit(onDeposit: () -> Unit) {
     onDeposit()
   }
 }

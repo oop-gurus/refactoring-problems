@@ -21,7 +21,13 @@ object AccountMapper {
                 InVerified()
             } else {
                 if (entity.isClosed) {
+                    if(entity.isFrozen) {
+                        VerifiedAndFrozenAndClosed()
+                    }
                     Closed()
+                }
+                if(entity.isFrozen) {
+                    Frozen()
                 }
                 Verified()
             }

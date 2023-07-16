@@ -10,6 +10,9 @@ class Closed: AccountState {
     throw RuntimeException("Account is closed")
   }
 
+  override fun melt(onMelt: () -> Unit) {
+  }
+
   override fun close(onClose: () -> Unit) {
   }
 

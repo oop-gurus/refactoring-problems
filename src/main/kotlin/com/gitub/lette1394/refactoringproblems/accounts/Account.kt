@@ -18,6 +18,10 @@ class Account(
         state.freeze(onFreeze)
     }
 
+    fun melt(onMelt: () -> Unit) {
+        state.melt(onMelt)
+    }
+
     fun close(onClose: () -> Unit) {
         state.close(onClose)
     }

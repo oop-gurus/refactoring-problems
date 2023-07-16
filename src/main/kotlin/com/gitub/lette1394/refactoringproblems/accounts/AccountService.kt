@@ -75,18 +75,16 @@ class AccountService(
                 .orElseThrow { throw RuntimeException("Account not found") }
         val account = AccountMapper.toAccount(accountEntity)
 
-        account.deposit {
-            accountEntity.balance = accountEntity.balance.add(amount)
+        account.deposit { accountEntity.balance = accountEntity.balance.add(amount) }
 
-            if (accountEntity.isFrozen) {
-                accountEntity.isFrozen = false
-                accountNotificationApi.notifyChangedToFrozen(
-                        AccountFrozenChangedRequest(
-                                accountId = accountId,
-                                isFrozen = false,
-                        ),
-                )
-            }
+        account.melt {
+            accountEntity.isFrozen = false
+            accountNotificationApi.notifyChangedToFrozen(
+                    AccountFrozenChangedRequest(
+                            accountId = accountId,
+                            isFrozen = false,
+                    ),
+            )
         }
     }
 
@@ -96,18 +94,16 @@ class AccountService(
                 .orElseThrow { throw RuntimeException("Account not found") }
         val account = AccountMapper.toAccount(accountEntity)
 
-        account.withdraw {
-            accountEntity.balance = WithdrawCalculator.calculate(accountEntity.balance, amount)
+        account.withdraw { accountEntity.balance = WithdrawCalculator.calculate(accountEntity.balance, amount) }
 
-            if (accountEntity.isFrozen) {
-                accountEntity.isFrozen = false
-                accountNotificationApi.notifyChangedToFrozen(
-                        AccountFrozenChangedRequest(
-                                accountId = accountId,
-                                isFrozen = false,
-                        ),
-                )
-            }
+        account.melt {
+            accountEntity.isFrozen = false
+            accountNotificationApi.notifyChangedToFrozen(
+                    AccountFrozenChangedRequest(
+                            accountId = accountId,
+                            isFrozen = false,
+                    ),
+            )
         }
     }
 }

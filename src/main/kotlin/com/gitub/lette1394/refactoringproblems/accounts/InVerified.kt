@@ -10,6 +10,9 @@ class InVerified: AccountState {
     throw RuntimeException("Account is inverified")
   }
 
+  override fun melt(onMelt: () -> Unit) {
+  }
+
   override fun close(onClose: () -> Unit) {
     onClose()
   }
