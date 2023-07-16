@@ -14,17 +14,17 @@ class AccountController(
     val accountService: AccountService,
 ) {
     @PostMapping("/v1/accounts")
-    fun createAccount(): ResponseEntity<Account> {
+    fun createAccount(): ResponseEntity<AccountResponse> {
         val account = accountService.createAccount()
-        return ResponseEntity.ok(account)
+        return ResponseEntity.ok(AccountResponse.of(account))
     }
 
     @GetMapping("/v1/accounts/{accountId}")
     fun getAccount(
         @PathVariable accountId: Long,
-    ): ResponseEntity<Account> {
+    ): ResponseEntity<AccountResponse> {
         val account = accountService.getAccount(accountId)
-        return ResponseEntity.ok(account)
+        return ResponseEntity.ok(AccountResponse.of(account))
     }
 
     @PutMapping("/v1/accounts/{accountId}/holder-verified")

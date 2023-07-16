@@ -23,13 +23,7 @@ class AccountService(
                 )
         )
 
-        return Account(
-                accountId = accountEntity.id,
-                isVerified = accountEntity.isVerified,
-                isClosed = accountEntity.isClosed,
-                isFrozen = accountEntity.isFrozen,
-                balance = accountEntity.balance,
-        )
+        return AccountMapper.toAccount(accountEntity)
     }
 
     @Transactional
@@ -37,37 +31,34 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
                 .orElseThrow { throw RuntimeException("Account not found") }
 
-        return Account(
-                accountId = accountId,
-                isVerified = accountEntity.isVerified,
-                isClosed = accountEntity.isClosed,
-                isFrozen = accountEntity.isFrozen,
-                balance = accountEntity.balance,
-        )
+        return AccountMapper.toAccount(accountEntity)
     }
 
     @Transactional
     fun holderVerified(accountId: Long) {
         val accountEntity = accountRepository.findById(accountId)
                 .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        getAccountState(accountEntity).verify { accountEntity.isVerified = true }
+        account.verify { accountEntity.isVerified = true }
     }
 
     @Transactional
     fun closeAccount(accountId: Long) {
         val accountEntity = accountRepository.findById(accountId)
                 .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        getAccountState(accountEntity).verify { accountEntity.isClosed = true }
+        account.verify { accountEntity.isClosed = true }
     }
 
     @Transactional
     fun freezeAccount(accountId: Long) {
         val accountEntity = accountRepository.findById(accountId)
                 .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        getAccountState(accountEntity).freeze {
+        account.freeze {
             accountEntity.isFrozen = true
             accountNotificationApi.notifyChangedToFrozen(
                     AccountFrozenChangedRequest(
@@ -82,8 +73,9 @@ class AccountService(
     fun deposit(accountId: Long, amount: BigDecimal) {
         val accountEntity = accountRepository.findById(accountId)
                 .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        getAccountState(accountEntity).deposit {
+        account.deposit {
             accountEntity.balance = accountEntity.balance.add(amount)
 
             if (accountEntity.isFrozen) {
@@ -102,8 +94,9 @@ class AccountService(
     fun withdraw(accountId: Long, amount: BigDecimal) {
         val accountEntity = accountRepository.findById(accountId)
                 .orElseThrow { throw RuntimeException("Account not found") }
+        val account = AccountMapper.toAccount(accountEntity)
 
-        getAccountState(accountEntity).withdraw {
+        account.withdraw {
             accountEntity.balance = WithdrawCalculator.calculate(accountEntity.balance, amount)
 
             if (accountEntity.isFrozen) {
@@ -117,17 +110,4 @@ class AccountService(
             }
         }
     }
-
-    private fun getAccountState(accountEntity: AccountEntity) =
-            if (!accountEntity.isVerified) {
-                if (accountEntity.isClosed) {
-                    InVerifiedAndClosed()
-                }
-                InVerified()
-            } else {
-                if (accountEntity.isClosed) {
-                    Closed()
-                }
-                Verified()
-            }
 }
