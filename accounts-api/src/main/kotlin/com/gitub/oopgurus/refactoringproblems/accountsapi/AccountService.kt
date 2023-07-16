@@ -105,6 +105,34 @@ class AccountService(
         accountEntity.balance = accountEntity.balance.add(amount)
     }
 
+
+
+    interface UnfrozenAction {
+        fun invoke(accountEntity: AccountEntity): UnfrozenAction
+    }
+
+    class DoNothing : UnfrozenAction {
+        override fun invoke(accountEntity: AccountEntity): UnfrozenAction {
+            // do nothing
+            return this
+        }
+    }
+
+    private var unFrozenAction: UnfrozenAction = object : UnfrozenAction {
+        override fun invoke(accountEntity: AccountEntity): UnfrozenAction {
+            accountEntity.isFrozen = false
+
+            accountNotificationApi.notifyChangedToFrozen(
+                AccountFrozenChangedRequest(
+                    accountId = accountEntity.id!!,
+                    isFrozen = false,
+                )
+            )
+
+            return DoNothing()
+        }
+    }
+
     @Transactional
     fun withdraw(accountId: Long, amount: BigDecimal) {
         val accountEntity = accountRepository.findById(accountId)
@@ -118,17 +146,8 @@ class AccountService(
             log.info { "계좌가 이미 닫혀있습니다. 출금할 수 없습니다. 요청을 무시합니다." }
             return
         }
-        if (accountEntity.isFrozen) {
-            accountEntity.isFrozen = false
-            accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountId,
-                    isFrozen = false,
-                ),
-            )
-        } else {
-            // do nothing
-        }
+
+        unFrozenAction = unFrozenAction.invoke(accountEntity)
         val subtracted = accountEntity.balance.subtract(amount)
         if (subtracted < BigDecimal.ZERO) {
             log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
