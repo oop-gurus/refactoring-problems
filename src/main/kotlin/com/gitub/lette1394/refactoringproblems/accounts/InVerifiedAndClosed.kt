@@ -1,6 +1,6 @@
 package com.gitub.lette1394.refactoringproblems.accounts
 
-class InVerified: AccountState {
+class InVerifiedAndClosed: AccountState {
   override fun verify(onVerify: () -> Unit) {
     onVerify()
   }
@@ -11,7 +11,6 @@ class InVerified: AccountState {
   }
 
   override fun close(onClose: () -> Unit) {
-    onClose()
   }
 
   override fun withdraw(onWithdraw: () -> Unit) {
@@ -20,6 +19,7 @@ class InVerified: AccountState {
   }
 
   override fun deposit(onDeposit: () -> Unit) {
-    onDeposit()
+    log.info { "계좌가 이미 닫혀있습니다. 입금할 수 없습니다. 요청을 무시합니다." }
+    throw RuntimeException("Account is closed")
   }
 }

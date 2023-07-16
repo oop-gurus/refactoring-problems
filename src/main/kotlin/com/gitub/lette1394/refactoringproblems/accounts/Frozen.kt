@@ -6,7 +6,6 @@ class Frozen : AccountState {
   }
 
   override fun freeze(onFreeze: () -> Any) {
-    onFreeze()
   }
 
   override fun close(onClose: () -> Any) {

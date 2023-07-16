@@ -1,23 +1,22 @@
 package com.gitub.lette1394.refactoringproblems.accounts
 
 class Verified: AccountState {
-  override fun verify(onVerify: () -> Any) {
-    onVerify()
+  override fun verify(onVerify: () -> Unit) {
   }
 
-  override fun freeze(onFreeze: () -> Any) {
+  override fun freeze(onFreeze: () -> Unit) {
     onFreeze()
   }
 
-  override fun close(onClose: () -> Any) {
+  override fun close(onClose: () -> Unit) {
     onClose()
   }
 
-  override fun withdraw(onWithdraw: () -> Any) {
+  override fun withdraw(onWithdraw: () -> Unit) {
     onWithdraw()
   }
 
-  override fun deposit(onDeposit: () -> Any) {
+  override fun deposit(onDeposit: () -> Unit) {
     onDeposit()
   }
 }
