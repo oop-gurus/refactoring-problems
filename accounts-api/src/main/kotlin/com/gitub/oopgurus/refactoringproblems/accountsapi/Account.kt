@@ -6,6 +6,7 @@ import java.math.BigDecimal
 class Account(
     private val accountEntity: AccountEntity,
     private var unfrozenAction: UnfrozenAction,
+    private val accountNotificationApi: AccountNotificationApi,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -18,7 +19,21 @@ class Account(
     }
 
     fun freeze() {
-        TODO()
+        if (!accountEntity.isVerified) {
+            log.info { "확인되지 않은 계좌는 동결할 수 없습니다. 요청을 무시합니다." }
+            return
+        }
+        if (accountEntity.isClosed) {
+            log.info { "계좌가 이미 닫혀있습니다. 동결할 수 없습니다. 요청을 무시합니다." }
+            return
+        }
+        accountEntity.isFrozen = true
+        accountNotificationApi.notifyChangedToFrozen(
+            AccountFrozenChangedRequest(
+                accountId = accountEntity.id!!,
+                isFrozen = true,
+            ),
+        )
     }
 
     fun deposit(amount: BigDecimal) {

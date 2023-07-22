@@ -67,21 +67,18 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        if (!accountEntity.isVerified) {
-            log.info { "확인되지 않은 계좌는 동결할 수 없습니다. 요청을 무시합니다." }
-            return
+        val unfrozenAction = when (accountEntity.isFrozen) {
+            true -> NotifyUnfreeze(accountNotificationApi)
+            false -> DoNothing()
         }
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 동결할 수 없습니다. 요청을 무시합니다." }
-            return
-        }
-        accountEntity.isFrozen = true
-        accountNotificationApi.notifyChangedToFrozen(
-            AccountFrozenChangedRequest(
-                accountId = accountId,
-                isFrozen = true,
-            ),
+
+        val account = Account(
+            accountEntity = accountEntity,
+            unfrozenAction = unfrozenAction,
+            accountNotificationApi = accountNotificationApi,
         )
+
+        account.freeze()
     }
 
     @Transactional
@@ -97,6 +94,7 @@ class AccountService(
         val account = Account(
             accountEntity = accountEntity,
             unfrozenAction = unfrozenAction,
+            accountNotificationApi = accountNotificationApi,
         )
         account.deposit(amount)
     }
@@ -115,6 +113,7 @@ class AccountService(
         val account = Account(
             accountEntity = accountEntity,
             unfrozenAction = unfrozenAction,
+            accountNotificationApi = accountNotificationApi,
         )
         account.withdraw(amount)
     }
