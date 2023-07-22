@@ -44,13 +44,7 @@ class Account(
         }
 
         if (accountEntity.isFrozen) {
-            accountEntity.isFrozen = false
-            accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountEntity.id!!,
-                    isFrozen = false,
-                ),
-            )
+            unFrozenAction = unFrozenAction.invoke()
         } else {
             // do nothing
         }
@@ -68,7 +62,11 @@ class Account(
             return
         }
 
-        unFrozenAction = unFrozenAction.invoke()
+        if (accountEntity.isFrozen) {
+            unFrozenAction = unFrozenAction.invoke()
+        } else {
+            // do nothing
+        }
         val subtracted = accountEntity.balance.subtract(amount)
         if (subtracted < BigDecimal.ZERO) {
             log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
