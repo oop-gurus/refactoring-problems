@@ -2,10 +2,26 @@ package com.gitub.oopgurus.refactoringproblems.accountsapi
 
 import java.math.BigDecimal
 
-data class Account(
-    val accountId: Long?,
-    val isVerified: Boolean,
-    val isClosed: Boolean,
-    val isFrozen: Boolean,
-    val balance: BigDecimal,
-)
+class Account(
+    private val balance: BigDecimal,
+) {
+    fun verified() {
+        TODO()
+    }
+
+    fun close() {
+        TODO()
+    }
+
+    fun freeze() {
+        TODO()
+    }
+
+    fun deposit(amount: BigDecimal) {
+        TODO()
+    }
+
+    fun withdraw(amount: BigDecimal) {
+        TODO()
+    }
+}

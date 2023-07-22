@@ -13,7 +13,7 @@ class AccountService(
     private val log = KotlinLogging.logger {}
 
     @Transactional
-    fun createAccount(): Account {
+    fun createAccount(): AccountData {
         val accountEntity = accountRepository.save(
             AccountEntity(
                 isVerified = false,
@@ -23,7 +23,7 @@ class AccountService(
             )
         )
 
-        return Account(
+        return AccountData(
             accountId = accountEntity.id,
             isVerified = accountEntity.isVerified,
             isClosed = accountEntity.isClosed,
@@ -33,11 +33,11 @@ class AccountService(
     }
 
     @Transactional
-    fun getAccount(accountId: Long): Account {
+    fun getAccount(accountId: Long): AccountData {
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        return Account(
+        return AccountData(
             accountId = accountId,
             isVerified = accountEntity.isVerified,
             isClosed = accountEntity.isClosed,
