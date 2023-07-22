@@ -42,6 +42,7 @@ class Account(
             log.info { "계좌가 이미 닫혀있습니다. 입금할 수 없습니다. 요청을 무시합니다." }
             return
         }
+
         if (accountEntity.isFrozen) {
             accountEntity.isFrozen = false
             accountNotificationApi.notifyChangedToFrozen(
@@ -50,7 +51,10 @@ class Account(
                     isFrozen = false,
                 ),
             )
+        } else {
+            // do nothing
         }
+
         accountEntity.balance = accountEntity.balance.add(amount)
     }
 
