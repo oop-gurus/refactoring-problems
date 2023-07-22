@@ -5,25 +5,9 @@ import java.math.BigDecimal
 
 class Account(
     private val accountEntity: AccountEntity,
-    private val accountNotificationApi: AccountNotificationApi,
-
+    private var unfrozenAction: UnfrozenAction,
 ) {
     private val log = KotlinLogging.logger {}
-
-    private var unFrozenAction: UnfrozenAction = object : UnfrozenAction {
-        override fun invoke(): UnfrozenAction {
-            accountEntity.isFrozen = false
-
-            accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountEntity.id!!,
-                    isFrozen = false,
-                )
-            )
-
-            return DoNothing()
-        }
-    }
 
     fun verified() {
         TODO()
@@ -43,12 +27,7 @@ class Account(
             return
         }
 
-        if (accountEntity.isFrozen) {
-            unFrozenAction = unFrozenAction.invoke()
-        } else {
-            // do nothing
-        }
-
+        unfrozenAction = unfrozenAction.invoke(accountEntity)
         accountEntity.balance = accountEntity.balance.add(amount)
     }
 
@@ -62,11 +41,7 @@ class Account(
             return
         }
 
-        if (accountEntity.isFrozen) {
-            unFrozenAction = unFrozenAction.invoke()
-        } else {
-            // do nothing
-        }
+        unfrozenAction = unfrozenAction.invoke(accountEntity)
         val subtracted = accountEntity.balance.subtract(amount)
         if (subtracted < BigDecimal.ZERO) {
             log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
@@ -78,12 +53,29 @@ class Account(
 
 
 interface UnfrozenAction {
-    fun invoke(): UnfrozenAction
+    fun invoke(accountEntity: AccountEntity): UnfrozenAction
 }
 
 class DoNothing : UnfrozenAction {
-    override fun invoke(): UnfrozenAction {
+    override fun invoke(accountEntity: AccountEntity): UnfrozenAction {
         // do nothing
         return this
+    }
+}
+
+class NotifyUnfreeze(
+    private val accountNotificationApi: AccountNotificationApi,
+) : UnfrozenAction {
+    override fun invoke(accountEntity: AccountEntity): UnfrozenAction {
+        accountEntity.isFrozen = false
+
+        accountNotificationApi.notifyChangedToFrozen(
+            AccountFrozenChangedRequest(
+                accountId = accountEntity.id!!,
+                isFrozen = false,
+            )
+        )
+
+        return DoNothing()
     }
 }

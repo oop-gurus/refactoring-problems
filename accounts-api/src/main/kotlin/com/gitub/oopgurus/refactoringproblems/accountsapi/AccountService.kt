@@ -89,9 +89,14 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
+        val unfrozenAction = when (accountEntity.isFrozen) {
+            true -> NotifyUnfreeze(accountNotificationApi)
+            false -> DoNothing()
+        }
+
         val account = Account(
             accountEntity = accountEntity,
-            accountNotificationApi = accountNotificationApi,
+            unfrozenAction = unfrozenAction,
         )
         account.deposit(amount)
     }
@@ -102,9 +107,14 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
+        val unfrozenAction = when (accountEntity.isFrozen) {
+            true -> NotifyUnfreeze(accountNotificationApi)
+            false -> DoNothing()
+        }
+
         val account = Account(
             accountEntity = accountEntity,
-            accountNotificationApi = accountNotificationApi,
+            unfrozenAction = unfrozenAction,
         )
         account.withdraw(amount)
     }
