@@ -67,6 +67,10 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
+        val frozenAction = when(accountEntity.isFrozen) {
+            true -> DoNothing2()
+            false -> NotifyFreeze(accountNotificationApi)
+        }
         val unfrozenAction = when (accountEntity.isFrozen) {
             true -> NotifyUnfreeze(accountNotificationApi)
             false -> DoNothing()
@@ -74,8 +78,8 @@ class AccountService(
 
         val account = Account(
             accountEntity = accountEntity,
+            frozenAction = frozenAction,
             unfrozenAction = unfrozenAction,
-            accountNotificationApi = accountNotificationApi,
         )
 
         account.freeze()
@@ -86,6 +90,10 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
+        val frozenAction = when (accountEntity.isFrozen) {
+            true -> DoNothing2()
+            false -> NotifyFreeze(accountNotificationApi)
+        }
         val unfrozenAction = when (accountEntity.isFrozen) {
             true -> NotifyUnfreeze(accountNotificationApi)
             false -> DoNothing()
@@ -93,8 +101,8 @@ class AccountService(
 
         val account = Account(
             accountEntity = accountEntity,
+            frozenAction = frozenAction,
             unfrozenAction = unfrozenAction,
-            accountNotificationApi = accountNotificationApi,
         )
         account.deposit(amount)
     }
@@ -105,6 +113,10 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
+        val frozenAction = when (accountEntity.isFrozen) {
+            true -> DoNothing2()
+            false -> NotifyFreeze(accountNotificationApi)
+        }
         val unfrozenAction = when (accountEntity.isFrozen) {
             true -> NotifyUnfreeze(accountNotificationApi)
             false -> DoNothing()
@@ -112,8 +124,8 @@ class AccountService(
 
         val account = Account(
             accountEntity = accountEntity,
+            frozenAction = frozenAction,
             unfrozenAction = unfrozenAction,
-            accountNotificationApi = accountNotificationApi,
         )
         account.withdraw(amount)
     }

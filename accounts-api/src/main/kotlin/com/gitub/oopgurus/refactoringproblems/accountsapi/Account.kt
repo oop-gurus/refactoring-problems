@@ -5,8 +5,8 @@ import java.math.BigDecimal
 
 class Account(
     private val accountEntity: AccountEntity,
+    private var frozenAction: FrozenAction,
     private var unfrozenAction: UnfrozenAction,
-    private val accountNotificationApi: AccountNotificationApi,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -27,13 +27,8 @@ class Account(
             log.info { "계좌가 이미 닫혀있습니다. 동결할 수 없습니다. 요청을 무시합니다." }
             return
         }
-        accountEntity.isFrozen = true
-        accountNotificationApi.notifyChangedToFrozen(
-            AccountFrozenChangedRequest(
-                accountId = accountEntity.id!!,
-                isFrozen = true,
-            ),
-        )
+
+        frozenAction = frozenAction.invoke(accountEntity)
     }
 
     fun deposit(amount: BigDecimal) {
@@ -67,6 +62,33 @@ class Account(
 }
 
 
+interface FrozenAction {
+    fun invoke(accountEntity: AccountEntity): FrozenAction
+}
+
+class DoNothing2 : FrozenAction {
+    override fun invoke(accountEntity: AccountEntity): FrozenAction {
+        // do nothing
+        return this
+    }
+}
+
+class NotifyFreeze(
+    private val accountNotificationApi: AccountNotificationApi,
+) : FrozenAction {
+    override fun invoke(accountEntity: AccountEntity): FrozenAction {
+        accountEntity.isFrozen = true
+        accountNotificationApi.notifyChangedToFrozen(
+            AccountFrozenChangedRequest(
+                accountId = accountEntity.id!!,
+                isFrozen = true,
+            ),
+        )
+        return DoNothing2()
+    }
+}
+
+
 interface UnfrozenAction {
     fun invoke(accountEntity: AccountEntity): UnfrozenAction
 }
@@ -83,14 +105,12 @@ class NotifyUnfreeze(
 ) : UnfrozenAction {
     override fun invoke(accountEntity: AccountEntity): UnfrozenAction {
         accountEntity.isFrozen = false
-
         accountNotificationApi.notifyChangedToFrozen(
             AccountFrozenChangedRequest(
                 accountId = accountEntity.id!!,
                 isFrozen = false,
             )
         )
-
         return DoNothing()
     }
 }
