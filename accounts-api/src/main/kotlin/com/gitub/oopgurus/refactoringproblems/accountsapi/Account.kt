@@ -11,7 +11,7 @@ class Account(
     private val log = KotlinLogging.logger {}
 
     private var unFrozenAction: UnfrozenAction = object : UnfrozenAction {
-        override fun invoke(accountEntity: AccountEntity): UnfrozenAction {
+        override fun invoke(): UnfrozenAction {
             accountEntity.isFrozen = false
 
             accountNotificationApi.notifyChangedToFrozen(
@@ -51,7 +51,7 @@ class Account(
             return
         }
 
-        unFrozenAction = unFrozenAction.invoke(accountEntity)
+        unFrozenAction = unFrozenAction.invoke()
         val subtracted = accountEntity.balance.subtract(amount)
         if (subtracted < BigDecimal.ZERO) {
             log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
@@ -63,11 +63,11 @@ class Account(
 
 
 interface UnfrozenAction {
-    fun invoke(accountEntity: AccountEntity): UnfrozenAction
+    fun invoke(): UnfrozenAction
 }
 
 class DoNothing : UnfrozenAction {
-    override fun invoke(accountEntity: AccountEntity): UnfrozenAction {
+    override fun invoke(): UnfrozenAction {
         // do nothing
         return this
     }
