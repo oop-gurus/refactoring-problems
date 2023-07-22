@@ -38,7 +38,20 @@ class Account(
     }
 
     fun deposit(amount: BigDecimal) {
-        TODO()
+        if (accountEntity.isClosed) {
+            log.info { "계좌가 이미 닫혀있습니다. 입금할 수 없습니다. 요청을 무시합니다." }
+            return
+        }
+        if (accountEntity.isFrozen) {
+            accountEntity.isFrozen = false
+            accountNotificationApi.notifyChangedToFrozen(
+                AccountFrozenChangedRequest(
+                    accountId = accountEntity.id!!,
+                    isFrozen = false,
+                ),
+            )
+        }
+        accountEntity.balance = accountEntity.balance.add(amount)
     }
 
     fun withdraw(amount: BigDecimal) {
