@@ -31,11 +31,4 @@ class MailController(
         mailService.creatMailTemplate(createMailTemplateDtos)
         return ResponseEntity.ok().build()
     }
-
-    @GetMapping("/v1/accounts/{accountId}")
-    fun getMail(
-        @PathVariable accountId: Long,
-    ): ResponseEntity<GetMailDto> {
-        TODO()
-    }
 }
