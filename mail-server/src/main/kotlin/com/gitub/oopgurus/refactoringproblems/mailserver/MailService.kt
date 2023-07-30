@@ -41,22 +41,6 @@ class MailService(
     }
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
-    // 객체를 일단 만들면 뭐든 할 수 있다
-    //   - 메일 발송 실패할 수도 있는거 아님? -> 이건 예외가 아니라 비즈니스 실패이므로 객체생성 ok
-    // from validation
-    // to validation
-    // 의존성 없이 validation 가능한거
-    //   - 이메일 형식
-    // http or db or 라이브러리 등 의존성이 필요한거
-    //   - 수신거부 메일 도메인 목록
-    //   - 메일 과금 회원 정보
-    //   - 템플릿 변수 확인
-    // 복잡한 로직이 있는 의존성이 필요한거
-    //   - 메일 과금 정책 -> 현재 메일 크레딧이 얼마나 남아있는지 확인
-    //   - 메일 API 초당 호출 횟수 제한
-    // 예약 메일 기능
-    //   - 일단 등록하고 나중에 발송 (성공 실패를 어떻게 알지?)
-
     data class FileAttachmentDto(
         val resultFile: File,
         val name: String,
