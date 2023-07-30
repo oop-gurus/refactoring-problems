@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:account-db
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  cloud:
+    openfeign:
+      client:
+        config:
+          account-notification-api:
+            connectTimeout: 2100
+            readTimeout: 5000
+            loggerLevel: full
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail:
+        debug: true
+        smtp:
+          connectiontimeout: 5000
+          auth: false
+          starttls:
+            enable: false
+          ssl:
+            enable: false
+app:
+  feign-client:
+    account:
+      notification:
+        api:
+          url: https://httpstat.us/200

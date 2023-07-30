@@ -28,10 +28,14 @@
 
 ## 현재까지 작성된 문제들
 ### 001. 계좌 이체 API
-- 브랜치: [`problems-001-accounts-api (클릭하여 이동)`](https://github.com/lette1394/refactoring-problems/tree/problems-001-accounts-api)
 - 난이도: ???
 - 설명: ???
+- 모듈: `accounts-api`
 
+### 002. Mail Server
+- 난이도: ???
+- 설명: ???
+- 모듈: `mail-server`
 
 ## 문제 풀이 방법
 1. 문제 브랜치 선택 후 이동

@@ -1,0 +1,52 @@
+### 템플릿 생성
+
+POST http://localhost:8080/v1/mail-templates
+Content-Type: application/json
+
+[
+  {
+    "name": "HELLO_WORLD_01",
+    "htmlBody": "<html>\n<h2>Hello [{{title}}] !</h2>\n<h3>This is a sample mail from [{{from}}] !</h3>\n<br/>\n<ul class=\"people_list\">\n   {{#each people}}\n       <li>{{name}} - {{age}}</li>\n   {{/each}}\n</ul>\n</html>\n"
+  }
+]
+
+### 메일 발송
+
+POST http://localhost:8080/v1/mails
+Content-Type: application/json
+
+[
+  {
+    "title": "메일 제목 03 (파일 첨부 됨)",
+    "fromAddress": "mail-server@localhost.com",
+    "fromName": "mail-server (메일서버)",
+    "toAddress": "sample-recipient@localhost.com",
+    "fileAttachments": [
+      {
+        "name": "sample-attachment-01.jpeg",
+        "url": "https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2300&q=80"
+      },
+      {
+        "name": "sample-attachment-02.jpeg",
+        "url": "https://plus.unsplash.com/premium_photo-1680740103993-21639956f3f0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1288&q=80"
+      }
+    ],
+    "htmlTemplateName": "HELLO_WORLD_01",
+    "htmlTemplateParameters": {
+      "title": "메일 제목 테스트 02",
+      "from": "mail-server (메일서버)",
+      "people": [
+        {
+          "name": "나재은",
+          "age": 30
+        },
+        {
+          "name": "홍길동",
+          "age": 22
+        }
+      ]
+    },
+    "sendAfterSeconds": 5
+  }
+]
+
