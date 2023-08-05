@@ -81,44 +81,32 @@ class MailService(
     }
 
     class StatefulGetValidToAddress(
-        private val mailSpamService: MailSpamService,
-        private val toAddress: String,
+        mailSpamService: MailSpamService,
+        toAddress: String,
     ) : GetValidToAddress {
-        private var isValid: Boolean? = null
-        private var exception: Exception? = null
+        private val toAddress: String
 
-        override fun invoke(): String {
-            if (isValid == null) {
-                mailSpamService.needBlockByDomainName(toAddress).let {
-                    if (it) {
-                        isValid = false
-                        exception = RuntimeException("도메인 차단")
-                        throw exception!!
-                    }
-                }
-                mailSpamService.needBlockByRecentSuccess(toAddress).let {
-                    if (it) {
-                        isValid = false
-                        exception = RuntimeException("최근 메일 발송 실패로 인한 차단")
-                        throw exception!!
-                    }
-                }
-                Regex(".+@.*\\..+").matches(toAddress).let {
-                    if (it.not()) {
-                        isValid = false
-                        exception = RuntimeException("이메일 형식 오류")
-                        throw exception!!
-                    }
-                }
-                isValid = true
-                return toAddress
-            } else {
-                if (isValid!!) {
-                    return toAddress
-                } else {
-                    throw exception!!
+        init {
+            mailSpamService.needBlockByDomainName(toAddress).let {
+                if (it) {
+                    throw RuntimeException("도메인 차단")
                 }
             }
+            mailSpamService.needBlockByRecentSuccess(toAddress).let {
+                if (it) {
+                    throw RuntimeException("최근 메일 발송 실패로 인한 차단")
+                }
+            }
+            Regex(".+@.*\\..+").matches(toAddress).let {
+                if (it.not()) {
+                    throw RuntimeException("이메일 형식 오류")
+                }
+            }
+            this.toAddress = toAddress
+        }
+
+        override fun invoke(): String {
+            return toAddress
         }
     }
 
