@@ -238,7 +238,7 @@ class MailService(
             mimeMessageHelper.setText(html, true)
         }
 
-        fun newMimeMessage(): MimeMessage {
+        fun newOne(): MimeMessage {
             val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
 
@@ -252,7 +252,7 @@ class MailService(
         }
     }
 
-    class GetMimeMessageFactory(
+    class MimeMessageFactoryFactory(
         private val javaMailSender: JavaMailSender,
         private val fileAttachments: List<FileAttachment>,
         private val restTemplate: RestTemplate,
@@ -341,7 +341,7 @@ class MailService(
             objectMapper = objectMapper,
         ).create()
 
-        val attachments = GetMimeMessageFactory(
+        val mimeMessageFactory = MimeMessageFactoryFactory(
             javaMailSender = javaMailSender,
             fileAttachments = sendMailDto.fileAttachments,
             restTemplate = restTemplate,
@@ -354,7 +354,7 @@ class MailService(
         ).create()
 
         try {
-            val mimeMessage = attachments.newMimeMessage()
+            val mimeMessage = mimeMessageFactory.newOne()
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
