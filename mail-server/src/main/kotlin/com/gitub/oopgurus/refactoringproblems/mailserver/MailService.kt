@@ -122,6 +122,17 @@ class MailService(
         }
     }
 
+    class GetTitle(
+        private val title: String,
+    ) {
+        fun create(): () -> String {
+            if (title.isBlank()) {
+                return { throw RuntimeException("제목이 비어있습니다") }
+            }
+            return { title }
+        }
+    }
+
 
     private fun sendSingle(sendMailDto: SendMailDto) {
         val getToAddress = GetToAddressFactory(
@@ -139,10 +150,10 @@ class MailService(
             htmlTemplateName = sendMailDto.htmlTemplateName,
         ).create()
 
+        val getTitle = GetTitle(
+            title = sendMailDto.title,
+        ).create()
 
-        if (sendMailDto.title.isBlank()) {
-            throw RuntimeException("제목이 비어있습니다")
-        }
         if (sendMailDto.htmlTemplateName.isBlank()) {
             throw RuntimeException("템플릿 이름이 비어있습니다")
         }
@@ -207,7 +218,7 @@ class MailService(
             }
             mimeMessageHelper.setSubject(
                 MimeUtility.encodeText(
-                    sendMailDto.title + postfixTitle,
+                    getTitle() + postfixTitle,
                     "UTF-8",
                     "B"
                 )
@@ -223,7 +234,7 @@ class MailService(
                                 fromAddress = getFromAddress(),
                                 fromName = sendMailDto.fromName,
                                 toAddress = getToAddress(),
-                                title = sendMailDto.title,
+                                title = getTitle(),
                                 htmlTemplateName = sendMailDto.htmlTemplateName,
                                 htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                                 isSuccess = true,
@@ -242,7 +253,7 @@ class MailService(
                         fromAddress = getFromAddress(),
                         fromName = sendMailDto.fromName,
                         toAddress = getToAddress(),
-                        title = sendMailDto.title,
+                        title = getTitle(),
                         htmlTemplateName = sendMailDto.htmlTemplateName,
                         htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                         isSuccess = true,
@@ -256,7 +267,7 @@ class MailService(
                     fromAddress = getFromAddress(),
                     fromName = sendMailDto.fromName,
                     toAddress = getToAddress(),
-                    title = sendMailDto.title,
+                    title = getTitle(),
                     htmlTemplateName = sendMailDto.htmlTemplateName,
                     htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                     isSuccess = false,
