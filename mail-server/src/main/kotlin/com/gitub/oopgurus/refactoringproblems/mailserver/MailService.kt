@@ -417,6 +417,7 @@ class PostOfficeBuilder(
 ) {
     private var getToAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
     private var getFromAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
+    private var getHtmlTemplateName: () -> String = { throw IllegalStateException("getToAddress is not set") }
 
     fun toAddress(toAddress: String): PostOfficeBuilder {
         this.getToAddress = MailService.GetToAddressFactory(
@@ -435,4 +436,11 @@ class PostOfficeBuilder(
         return this
     }
 
+    fun htmlTemplateName(htmlTemplateName: String): PostOfficeBuilder {
+        this.getHtmlTemplateName = MailService.GetHtmlTemplateNameFactory(
+            htmlTemplateName = htmlTemplateName,
+        ).create()
+
+        return this
+    }
 }
