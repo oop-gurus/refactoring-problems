@@ -76,14 +76,14 @@ class MailService(
     // 3. 메일 발송 전에 수신자 이메일 형식이 맞는지 확인
     // -> 이 모든걸 호출하는 사람이 신경쓰지 말고, 그냥 어떤 객체가 있고 걔한테 달라고 물어보면 안될까?
     // -> 그런 아이디어로 만들어진게 GetValidToAddress 인터페이스임
-    fun interface GetValidToAddressFactory {
+    fun interface GetToAddressFactory {
         fun create(): () -> String
     }
 
-    class StatefulGetValidToAddressFactory(
+    class StatefulGetToAddressFactory(
         private val mailSpamService: MailSpamService,
         private val toAddress: String,
-    ) : GetValidToAddressFactory {
+    ) : GetToAddressFactory {
         override fun create(): () -> String {
             mailSpamService.needBlockByDomainName(toAddress).let {
                 if (it) {
@@ -105,7 +105,7 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        val getValidToAddressFactory = StatefulGetValidToAddressFactory(
+        val getValidToAddressFactory = StatefulGetToAddressFactory(
             mailSpamService = mailSpamService,
             toAddress = sendMailDto.toAddress,
         )
