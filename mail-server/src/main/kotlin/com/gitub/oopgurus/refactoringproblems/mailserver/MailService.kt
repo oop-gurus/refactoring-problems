@@ -110,13 +110,10 @@ class MailService(
     class GetHtmlTemplate(
         private val mailTemplateRepository: MailTemplateRepository,
         private val handlebars: Handlebars,
-        private val htmlTemplateName: String,
+        private val getHtmlTemplateName: () -> String,
     ) {
         fun create(): () -> Template {
-            if (htmlTemplateName.isBlank()) {
-                return { throw RuntimeException("템플릿 이름이 비어있습니다") }
-            }
-
+            val htmlTemplateName = getHtmlTemplateName()
             val htmlTemplate = mailTemplateRepository.findByName(htmlTemplateName)
             if (htmlTemplate == null) {
                 return { throw RuntimeException("템플릿이 존재하지 않습니다: [$htmlTemplateName]") }
@@ -137,6 +134,28 @@ class MailService(
         }
     }
 
+    class GetFromName(
+        private val fromName: String,
+    ) {
+        fun create(): () -> String {
+            if (fromName.isBlank()) {
+                return { throw RuntimeException("이름이 비어있습니다") }
+            }
+            return { fromName }
+        }
+    }
+
+    class GetHtmlTemplateName(
+        private val htmlTemplateName: String,
+    ) {
+        fun create(): () -> String {
+            if (htmlTemplateName.isBlank()) {
+                return { throw RuntimeException("템플릿 이름이 비어있습니다") }
+            }
+            return { htmlTemplateName }
+        }
+    }
+
     private fun sendSingle(sendMailDto: SendMailDto) {
         val getToAddress = GetToAddressFactory(
             mailSpamService = mailSpamService,
@@ -147,14 +166,22 @@ class MailService(
             fromAddress = sendMailDto.fromAddress,
         ).create()
 
+        val getHtmlTemplateName = GetHtmlTemplateName(
+            htmlTemplateName = sendMailDto.htmlTemplateName,
+        ).create()
+
         val getHtmlTemplate = GetHtmlTemplate(
             mailTemplateRepository = mailTemplateRepository,
             handlebars = handlebars,
-            htmlTemplateName = sendMailDto.htmlTemplateName,
+            getHtmlTemplateName = getHtmlTemplateName,
         ).create()
 
         val getTitle = GetTitle(
             title = sendMailDto.title,
+        ).create()
+
+        val getFromName = GetFromName(
+            fromName = sendMailDto.fromName,
         ).create()
 
         if (sendMailDto.fromName.isBlank()) {
@@ -167,7 +194,7 @@ class MailService(
         try {
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
             mimeMessageHelper.setText(html, true)
-            mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), sendMailDto.fromName, "UTF-8"))
+            mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), getFromName(), "UTF-8"))
             mimeMessageHelper.setTo(getToAddress())
 
             val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
@@ -232,10 +259,10 @@ class MailService(
                         mailRepository.save(
                             MailEntity(
                                 fromAddress = getFromAddress(),
-                                fromName = sendMailDto.fromName,
+                                fromName = getFromName(),
                                 toAddress = getToAddress(),
                                 title = getTitle(),
-                                htmlTemplateName = sendMailDto.htmlTemplateName,
+                                htmlTemplateName = getHtmlTemplateName(),
                                 htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                                 isSuccess = true,
                             )
@@ -251,10 +278,10 @@ class MailService(
                 mailRepository.save(
                     MailEntity(
                         fromAddress = getFromAddress(),
-                        fromName = sendMailDto.fromName,
+                        fromName = getFromName(),
                         toAddress = getToAddress(),
                         title = getTitle(),
-                        htmlTemplateName = sendMailDto.htmlTemplateName,
+                        htmlTemplateName = getHtmlTemplateName(),
                         htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                         isSuccess = true,
                     )
@@ -265,10 +292,10 @@ class MailService(
             mailRepository.save(
                 MailEntity(
                     fromAddress = getFromAddress(),
-                    fromName = sendMailDto.fromName,
+                    fromName = getFromName(),
                     toAddress = getToAddress(),
                     title = getTitle(),
-                    htmlTemplateName = sendMailDto.htmlTemplateName,
+                    htmlTemplateName = getHtmlTemplateName(),
                     htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                     isSuccess = false,
                 )
