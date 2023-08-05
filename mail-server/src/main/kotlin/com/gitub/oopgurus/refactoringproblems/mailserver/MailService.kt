@@ -184,6 +184,11 @@ class MailService(
 
     class Attachments(
         private val getTitle: GetTitle,
+        private val getHtmlTemplate: GetHtmlTemplate,
+        private val getHtmlTemplateParameters: GetHtmlTemplateParameters,
+        private val getFromAddressFactory: GetFromAddressFactory,
+        private val getFromName: GetFromName,
+        private val getToAddressFactory: GetToAddressFactory,
         private val fileAttachmentDtoList: List<FileAttachmentDto>,
     ) {
         fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
@@ -219,12 +224,36 @@ class MailService(
         private fun count(): Int {
             return fileAttachmentDtoList.size
         }
+
+        fun addToAddressTo(mimeMessageHelper: MimeMessageHelper) {
+            val getFromAddress = getFromAddressFactory.create()
+            val getFromName = getFromName.create()
+            mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), getFromName(), "UTF-8"))
+        }
+
+        fun addFromAddressTo(mimeMessageHelper: MimeMessageHelper) {
+            val getToAddress = getToAddressFactory.create()
+            mimeMessageHelper.setTo(getToAddress())
+        }
+
+        fun addTextTo(mimeMessageHelper: MimeMessageHelper) {
+            val getHtmlTemplate = getHtmlTemplate.create()
+            val getHtmlTemplateParameters = getHtmlTemplateParameters.create()
+
+            val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
+            mimeMessageHelper.setText(html, true)
+        }
     }
 
     class GetFileAttachments(
         private val fileAttachments: List<FileAttachment>,
         private val restTemplate: RestTemplate,
         private val getTitle: GetTitle,
+        private val getHtmlTemplate: GetHtmlTemplate,
+        private val getHtmlTemplateParameters: GetHtmlTemplateParameters,
+        private val getFromAddressFactory: GetFromAddressFactory,
+        private val getFromName: GetFromName,
+        private val getToAddressFactory: GetToAddressFactory,
     ) {
         fun create(): () -> Attachments {
             val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
@@ -257,10 +286,17 @@ class MailService(
                 fileAttachmentDto
             }
 
-            return { Attachments(
-                getTitle = getTitle,
-                fileAttachmentDtoList = fileAttachmentDtoList
-            ) }
+            return {
+                Attachments(
+                    getTitle = getTitle,
+                    getHtmlTemplate = getHtmlTemplate,
+                    getHtmlTemplateParameters = getHtmlTemplateParameters,
+                    getFromAddressFactory = getFromAddressFactory,
+                    getFromName = getFromName,
+                    getToAddressFactory = getToAddressFactory,
+                    fileAttachmentDtoList = fileAttachmentDtoList,
+                )
+            }
         }
     }
 
@@ -300,8 +336,27 @@ class MailService(
         val getAttachments = GetFileAttachments(
             fileAttachments = sendMailDto.fileAttachments,
             restTemplate = restTemplate,
-            getTitle =  GetTitle(
+            getTitle = GetTitle(
                 title = sendMailDto.title,
+            ),
+            getHtmlTemplate = GetHtmlTemplate(
+                mailTemplateRepository = mailTemplateRepository,
+                handlebars = handlebars,
+                getHtmlTemplateName = getHtmlTemplateName,
+            ),
+            getHtmlTemplateParameters = GetHtmlTemplateParameters(
+                htmlTemplateParameters = sendMailDto.htmlTemplateParameters,
+                objectMapper = objectMapper,
+            ),
+            getFromAddressFactory = GetFromAddressFactory(
+                fromAddress = sendMailDto.fromAddress,
+            ),
+            getFromName = GetFromName(
+                fromName = sendMailDto.fromName,
+            ),
+            getToAddressFactory = GetToAddressFactory(
+                mailSpamService = mailSpamService,
+                toAddress = sendMailDto.toAddress,
             ),
         ).create()
 
@@ -310,13 +365,13 @@ class MailService(
 
         try {
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
-            mimeMessageHelper.setText(html, true)
-            mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), getFromName(), "UTF-8"))
-            mimeMessageHelper.setTo(getToAddress())
 
             val attachments = getAttachments()
             attachments.addFilesTo(mimeMessageHelper)
             attachments.addSubjectTo(mimeMessageHelper)
+            attachments.addToAddressTo(mimeMessageHelper)
+            attachments.addFromAddressTo(mimeMessageHelper)
+            attachments.addTextTo(mimeMessageHelper)
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
