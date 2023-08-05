@@ -420,10 +420,17 @@ class PostOfficeBuilder(
     private var getHtmlTemplateName: () -> String = { throw IllegalStateException("getToAddress is not set") }
 
     fun toAddress(toAddress: String): PostOfficeBuilder {
-        this.getToAddress = MailService.GetToAddressFactory(
-            mailSpamService = mailSpamService,
-            toAddress = toAddress,
-        ).create()
+        getToAddress = if (mailSpamService.needBlockByDomainName(toAddress)) {
+            { throw RuntimeException("도메인 차단") }
+        }
+        else if (mailSpamService.needBlockByRecentSuccess(toAddress)) {
+            { throw RuntimeException("최근 메일 발송 실패로 인한 차단") }
+        }
+        else if (Regex(".+@.*\\..+").matches(toAddress).not()) {
+            { throw RuntimeException("이메일 형식 오류") }
+        } else {
+            { toAddress }
+        }
 
         return this
     }
