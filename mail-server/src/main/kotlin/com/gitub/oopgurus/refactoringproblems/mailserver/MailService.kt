@@ -42,7 +42,6 @@ class MailService(
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
 
-
     // 객체를 일단 만들면 뭐든 할 수 있다
     //   - 메일 발송 실패할 수도 있는거 아님? -> 이건 예외가 아니라 비즈니스 실패이므로 객체생성 ok
     // from validation
@@ -81,27 +80,53 @@ class MailService(
         fun invoke(): String
     }
 
-    private fun sendSingle(sendMailDto: SendMailDto) {
-        val getValidToAddress = GetValidToAddress {
-            mailSpamService.needBlockByDomainName(sendMailDto.toAddress).let {
-                if (it) {
-                    throw RuntimeException("도메인 차단")
+    class StatefulGetValidToAddress(
+        private val mailSpamService: MailSpamService,
+        private val toAddress: String,
+    ) : GetValidToAddress {
+        private var isValid: Boolean? = null
+        private var exception: Exception? = null
+
+        override fun invoke(): String {
+            if (isValid == null) {
+                mailSpamService.needBlockByDomainName(toAddress).let {
+                    if (it) {
+                        isValid = false
+                        exception = RuntimeException("도메인 차단")
+                        throw exception!!
+                    }
+                }
+                mailSpamService.needBlockByRecentSuccess(toAddress).let {
+                    if (it) {
+                        isValid = false
+                        exception = RuntimeException("최근 메일 발송 실패로 인한 차단")
+                        throw exception!!
+                    }
+                }
+                Regex(".+@.*\\..+").matches(toAddress).let {
+                    if (it.not()) {
+                        isValid = false
+                        exception = RuntimeException("이메일 형식 오류")
+                        throw exception!!
+                    }
+                }
+                isValid = true
+                return toAddress
+            } else {
+                if (isValid!!) {
+                    return toAddress
+                } else {
+                    throw exception!!
                 }
             }
-            mailSpamService.needBlockByRecentSuccess(sendMailDto.toAddress).let {
-                if (it) {
-                    throw RuntimeException("최근 메일 발송 실패로 인한 차단")
-                }
-            }
-            Regex(".+@.*\\..+").matches(sendMailDto.toAddress).let {
-                if (it.not()) {
-                    throw RuntimeException("이메일 형식 오류")
-                }
-            }
-            sendMailDto.toAddress
         }
+    }
 
-
+    private fun sendSingle(sendMailDto: SendMailDto) {
+        val getValidToAddress = StatefulGetValidToAddress(
+            mailSpamService = mailSpamService,
+            toAddress = sendMailDto.toAddress,
+        )
 
         Regex(".+@.*\\..+").matches(sendMailDto.fromAddress).let {
             if (it.not()) {
