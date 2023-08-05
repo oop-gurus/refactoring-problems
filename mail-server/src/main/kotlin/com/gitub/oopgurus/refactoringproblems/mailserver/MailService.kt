@@ -98,6 +98,23 @@ class MailService(
         }
     }
 
+    fun interface GetFromAddressFactory {
+        fun create(): () -> String
+    }
+
+    class StatefulGetFromAddressFactory(
+        private val fromAddress: String,
+    ) : GetFromAddressFactory {
+        override fun create(): () -> String {
+            Regex(".+@.*\\..+").matches(fromAddress).let {
+                if (it.not()) {
+                    return { throw RuntimeException("이메일 형식 오류") }
+                }
+            }
+            return { fromAddress }
+        }
+    }
+
     private fun sendSingle(sendMailDto: SendMailDto) {
         val getValidToAddressFactory = StatefulGetToAddressFactory(
             mailSpamService = mailSpamService,
@@ -105,11 +122,12 @@ class MailService(
         )
         val getToAddress = getValidToAddressFactory.create()
 
-        Regex(".+@.*\\..+").matches(sendMailDto.fromAddress).let {
-            if (it.not()) {
-                throw RuntimeException("이메일 형식 오류")
-            }
-        }
+        val getFromAddress = StatefulGetFromAddressFactory(
+            fromAddress = sendMailDto.fromAddress,
+        ).create()
+
+
+
         if (sendMailDto.title.isBlank()) {
             throw RuntimeException("제목이 비어있습니다")
         }
@@ -129,7 +147,7 @@ class MailService(
         try {
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
             mimeMessageHelper.setText(html, true)
-            mimeMessageHelper.setFrom(InternetAddress(sendMailDto.fromAddress, sendMailDto.fromName, "UTF-8"))
+            mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), sendMailDto.fromName, "UTF-8"))
             mimeMessageHelper.setTo(getToAddress())
 
             val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
@@ -193,7 +211,7 @@ class MailService(
                         javaMailSender.send(mimeMessage)
                         mailRepository.save(
                             MailEntity(
-                                fromAddress = sendMailDto.fromAddress,
+                                fromAddress = getFromAddress(),
                                 fromName = sendMailDto.fromName,
                                 toAddress = getToAddress(),
                                 title = sendMailDto.title,
@@ -212,7 +230,7 @@ class MailService(
                 javaMailSender.send(mimeMessage)
                 mailRepository.save(
                     MailEntity(
-                        fromAddress = sendMailDto.fromAddress,
+                        fromAddress = getFromAddress(),
                         fromName = sendMailDto.fromName,
                         toAddress = getToAddress(),
                         title = sendMailDto.title,
@@ -226,7 +244,7 @@ class MailService(
         } catch (e: Exception) {
             mailRepository.save(
                 MailEntity(
-                    fromAddress = sendMailDto.fromAddress,
+                    fromAddress = getFromAddress(),
                     fromName = sendMailDto.fromName,
                     toAddress = sendMailDto.toAddress,
                     title = sendMailDto.title,
