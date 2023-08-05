@@ -70,15 +70,11 @@ class MailService(
         }
     }
 
-    fun interface GetToAddressFactory {
-        fun create(): () -> String
-    }
-
-    class StatefulGetToAddressFactory(
+    class GetToAddressFactory(
         private val mailSpamService: MailSpamService,
         private val toAddress: String,
-    ) : GetToAddressFactory {
-        override fun create(): () -> String {
+    ) {
+        fun create(): () -> String {
             mailSpamService.needBlockByDomainName(toAddress).let {
                 if (it) {
                     return { throw RuntimeException("도메인 차단") }
@@ -98,14 +94,10 @@ class MailService(
         }
     }
 
-    fun interface GetFromAddressFactory {
-        fun create(): () -> String
-    }
-
-    class StatefulGetFromAddressFactory(
+    class GetFromAddressFactory(
         private val fromAddress: String,
-    ) : GetFromAddressFactory {
-        override fun create(): () -> String {
+    ) {
+        fun create(): () -> String {
             Regex(".+@.*\\..+").matches(fromAddress).let {
                 if (it.not()) {
                     return { throw RuntimeException("이메일 형식 오류") }
@@ -116,12 +108,12 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        val getToAddress = StatefulGetToAddressFactory(
+        val getToAddress = GetToAddressFactory(
             mailSpamService = mailSpamService,
             toAddress = sendMailDto.toAddress,
         ).create()
 
-        val getFromAddress = StatefulGetFromAddressFactory(
+        val getFromAddress = GetFromAddressFactory(
             fromAddress = sendMailDto.fromAddress,
         ).create()
 
