@@ -70,12 +70,6 @@ class MailService(
         }
     }
 
-    // sendMailDto.toAddress 를 사용하기 위해서 많은 관문이 있음
-    // 1. 메일 발송 전에 수신자 도메인이 차단되어 있는지 확인
-    // 2. 메일 발송 전에 최근 메일 발송 실패로 인해 차단되어 있는지 확인
-    // 3. 메일 발송 전에 수신자 이메일 형식이 맞는지 확인
-    // -> 이 모든걸 호출하는 사람이 신경쓰지 말고, 그냥 어떤 객체가 있고 걔한테 달라고 물어보면 안될까?
-    // -> 그런 아이디어로 만들어진게 GetValidToAddress 인터페이스임
     fun interface GetToAddressFactory {
         fun create(): () -> String
     }
