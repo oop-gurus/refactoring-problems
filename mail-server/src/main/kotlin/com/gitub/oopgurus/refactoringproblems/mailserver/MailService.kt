@@ -113,6 +113,10 @@ class MailService(
         private val htmlTemplateName: String,
     ) {
         fun create(): () -> Template {
+            if (htmlTemplateName.isBlank()) {
+                return { throw RuntimeException("템플릿 이름이 비어있습니다") }
+            }
+
             val htmlTemplate = mailTemplateRepository.findByName(htmlTemplateName)
             if (htmlTemplate == null) {
                 return { throw RuntimeException("템플릿이 존재하지 않습니다: [$htmlTemplateName]") }
@@ -132,7 +136,6 @@ class MailService(
             return { title }
         }
     }
-
 
     private fun sendSingle(sendMailDto: SendMailDto) {
         val getToAddress = GetToAddressFactory(
@@ -154,9 +157,6 @@ class MailService(
             title = sendMailDto.title,
         ).create()
 
-        if (sendMailDto.htmlTemplateName.isBlank()) {
-            throw RuntimeException("템플릿 이름이 비어있습니다")
-        }
         if (sendMailDto.fromName.isBlank()) {
             throw RuntimeException("발신자 이름이 비어있습니다")
         }
