@@ -184,10 +184,6 @@ class MailService(
             fromName = sendMailDto.fromName,
         ).create()
 
-        if (sendMailDto.fromName.isBlank()) {
-            throw RuntimeException("발신자 이름이 비어있습니다")
-        }
-
         val html = getHtmlTemplate().apply(sendMailDto.htmlTemplateParameters)
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
