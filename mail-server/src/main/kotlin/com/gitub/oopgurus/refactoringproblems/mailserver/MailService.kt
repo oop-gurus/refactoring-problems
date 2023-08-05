@@ -221,7 +221,7 @@ class MailService(
         }
     }
 
-    class MimeMessageFactory(
+    class PostOffice(
         private val javaMailSender: JavaMailSender,
         private val getTitle: () -> String,
         private val getHtmlTemplate: () -> Template,
@@ -231,7 +231,7 @@ class MailService(
         private val getToAddress: () -> String,
         private val getFileAttachmentDtoList: () -> List<FileAttachmentDto>,
     ) {
-        fun newOne(): MimeMessage {
+        fun newMimeMessage(): MimeMessage {
             val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
 
@@ -329,7 +329,7 @@ class MailService(
             restTemplate = restTemplate,
         ).create()
 
-        val mimeMessageFactory = MimeMessageFactory(
+        val postOffice = PostOffice(
             javaMailSender = javaMailSender,
             getTitle = getTitle,
             getHtmlTemplate = getHtmlTemplate,
@@ -341,7 +341,7 @@ class MailService(
         )
 
         try {
-            val mimeMessage = mimeMessageFactory.newOne()
+            val mimeMessage = postOffice.newMimeMessage()
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
@@ -410,3 +410,4 @@ class MailService(
         }
     }
 }
+
