@@ -156,6 +156,33 @@ class MailService(
         }
     }
 
+    class GetHtmlTemplateParameters(
+        private val htmlTemplateParameters: Map<String, Any>,
+        private val objectMapper: ObjectMapper,
+    ) {
+        fun create(): () -> HtmlTemplateParameters {
+            return {
+                HtmlTemplateParameters(
+                    holder = htmlTemplateParameters,
+                    objectMapper = objectMapper,
+                )
+            }
+        }
+    }
+
+    class HtmlTemplateParameters(
+        private val holder: Map<String, Any>,
+        private val objectMapper: ObjectMapper,
+    ) {
+        fun asMap(): Map<String, Any> {
+            return HashMap(holder)
+        }
+
+        fun asJson(): String {
+            return objectMapper.writeValueAsString(holder)
+        }
+    }
+
     private fun sendSingle(sendMailDto: SendMailDto) {
         val getToAddress = GetToAddressFactory(
             mailSpamService = mailSpamService,
@@ -184,7 +211,12 @@ class MailService(
             fromName = sendMailDto.fromName,
         ).create()
 
-        val html = getHtmlTemplate().apply(sendMailDto.htmlTemplateParameters)
+        val getHtmlTemplateParameters = GetHtmlTemplateParameters(
+            htmlTemplateParameters = sendMailDto.htmlTemplateParameters,
+            objectMapper = objectMapper,
+        ).create()
+
+        val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
         try {
@@ -259,7 +291,7 @@ class MailService(
                                 toAddress = getToAddress(),
                                 title = getTitle(),
                                 htmlTemplateName = getHtmlTemplateName(),
-                                htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                                htmlTemplateParameters = getHtmlTemplateParameters().asJson(),
                                 isSuccess = true,
                             )
                         )
@@ -278,7 +310,7 @@ class MailService(
                         toAddress = getToAddress(),
                         title = getTitle(),
                         htmlTemplateName = getHtmlTemplateName(),
-                        htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                        htmlTemplateParameters = getHtmlTemplateParameters().asJson(),
                         isSuccess = true,
                     )
                 )
@@ -292,7 +324,7 @@ class MailService(
                     toAddress = getToAddress(),
                     title = getTitle(),
                     htmlTemplateName = getHtmlTemplateName(),
-                    htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                    htmlTemplateParameters = getHtmlTemplateParameters().asJson(),
                     isSuccess = false,
                 )
             )
