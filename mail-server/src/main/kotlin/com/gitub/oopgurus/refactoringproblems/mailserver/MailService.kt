@@ -231,6 +231,19 @@ class MailService(
         private val getToAddress: () -> String,
         private val getFileAttachmentDtoList: () -> List<FileAttachmentDto>,
     ) {
+        fun newOne(): MimeMessage {
+            val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
+            val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
+
+            addFilesTo(mimeMessageHelper)
+            addSubjectTo(mimeMessageHelper)
+            addToAddressTo(mimeMessageHelper)
+            addFromAddressTo(mimeMessageHelper)
+            addTextTo(mimeMessageHelper)
+
+            return mimeMessage
+        }
+
         private fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
             getFileAttachmentDtoList().forEach {
                 mimeMessageHelper.addAttachment(it.name, it.resultFile)
@@ -275,19 +288,6 @@ class MailService(
         private fun addTextTo(mimeMessageHelper: MimeMessageHelper) {
             val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
             mimeMessageHelper.setText(html, true)
-        }
-
-        fun newOne(): MimeMessage {
-            val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
-            val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
-
-            addFilesTo(mimeMessageHelper)
-            addSubjectTo(mimeMessageHelper)
-            addToAddressTo(mimeMessageHelper)
-            addFromAddressTo(mimeMessageHelper)
-            addTextTo(mimeMessageHelper)
-
-            return mimeMessage
         }
     }
 
