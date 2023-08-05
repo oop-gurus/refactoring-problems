@@ -82,21 +82,27 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        mailSpamService.needBlockByDomainName(sendMailDto.toAddress).let {
-            if (it) {
-                throw RuntimeException("도메인 차단")
+        val getValidToAddress = GetValidToAddress {
+            mailSpamService.needBlockByDomainName(sendMailDto.toAddress).let {
+                if (it) {
+                    throw RuntimeException("도메인 차단")
+                }
             }
-        }
-        mailSpamService.needBlockByRecentSuccess(sendMailDto.toAddress).let {
-            if (it) {
-                throw RuntimeException("최근 메일 발송 실패로 인한 차단")
+            mailSpamService.needBlockByRecentSuccess(sendMailDto.toAddress).let {
+                if (it) {
+                    throw RuntimeException("최근 메일 발송 실패로 인한 차단")
+                }
             }
-        }
-        Regex(".+@.*\\..+").matches(sendMailDto.toAddress).let {
-            if (it.not()) {
-                throw RuntimeException("이메일 형식 오류")
+            Regex(".+@.*\\..+").matches(sendMailDto.toAddress).let {
+                if (it.not()) {
+                    throw RuntimeException("이메일 형식 오류")
+                }
             }
+            sendMailDto.toAddress
         }
+
+
+
         Regex(".+@.*\\..+").matches(sendMailDto.fromAddress).let {
             if (it.not()) {
                 throw RuntimeException("이메일 형식 오류")
@@ -122,7 +128,7 @@ class MailService(
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
             mimeMessageHelper.setText(html, true)
             mimeMessageHelper.setFrom(InternetAddress(sendMailDto.fromAddress, sendMailDto.fromName, "UTF-8"))
-            mimeMessageHelper.setTo(sendMailDto.toAddress)
+            mimeMessageHelper.setTo(getValidToAddress.invoke())
 
             val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
                 val result = restTemplate.execute(
@@ -187,7 +193,7 @@ class MailService(
                             MailEntity(
                                 fromAddress = sendMailDto.fromAddress,
                                 fromName = sendMailDto.fromName,
-                                toAddress = sendMailDto.toAddress,
+                                toAddress = getValidToAddress.invoke(),
                                 title = sendMailDto.title,
                                 htmlTemplateName = sendMailDto.htmlTemplateName,
                                 htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
@@ -206,7 +212,7 @@ class MailService(
                     MailEntity(
                         fromAddress = sendMailDto.fromAddress,
                         fromName = sendMailDto.fromName,
-                        toAddress = sendMailDto.toAddress,
+                        toAddress = getValidToAddress.invoke(),
                         title = sendMailDto.title,
                         htmlTemplateName = sendMailDto.htmlTemplateName,
                         htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
