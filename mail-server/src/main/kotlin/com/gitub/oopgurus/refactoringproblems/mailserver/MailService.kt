@@ -77,36 +77,30 @@ class MailService(
     // -> 이 모든걸 호출하는 사람이 신경쓰지 말고, 그냥 어떤 객체가 있고 걔한테 달라고 물어보면 안될까?
     // -> 그런 아이디어로 만들어진게 GetValidToAddress 인터페이스임
     fun interface GetValidToAddress {
-        fun invoke(): String
+        fun invoke(): () -> String
     }
 
     class StatefulGetValidToAddress(
-        mailSpamService: MailSpamService,
-        toAddress: String,
+        private val mailSpamService: MailSpamService,
+        private val toAddress: String,
     ) : GetValidToAddress {
-        private val toAddress: String
-
-        init {
+        override fun invoke(): () -> String {
             mailSpamService.needBlockByDomainName(toAddress).let {
                 if (it) {
-                    throw RuntimeException("도메인 차단")
+                    return { throw RuntimeException("도메인 차단") }
                 }
             }
             mailSpamService.needBlockByRecentSuccess(toAddress).let {
                 if (it) {
-                    throw RuntimeException("최근 메일 발송 실패로 인한 차단")
+                    return { throw RuntimeException("최근 메일 발송 실패로 인한 차단") }
                 }
             }
             Regex(".+@.*\\..+").matches(toAddress).let {
                 if (it.not()) {
-                    throw RuntimeException("이메일 형식 오류")
+                    return { throw RuntimeException("이메일 형식 오류") }
                 }
             }
-            this.toAddress = toAddress
-        }
-
-        override fun invoke(): String {
-            return toAddress
+            return { toAddress }
         }
     }
 
@@ -141,7 +135,7 @@ class MailService(
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
             mimeMessageHelper.setText(html, true)
             mimeMessageHelper.setFrom(InternetAddress(sendMailDto.fromAddress, sendMailDto.fromName, "UTF-8"))
-            mimeMessageHelper.setTo(getValidToAddress.invoke())
+            mimeMessageHelper.setTo(getValidToAddress.invoke()())
 
             val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
                 val result = restTemplate.execute(
@@ -206,7 +200,7 @@ class MailService(
                             MailEntity(
                                 fromAddress = sendMailDto.fromAddress,
                                 fromName = sendMailDto.fromName,
-                                toAddress = getValidToAddress.invoke(),
+                                toAddress = getValidToAddress.invoke()(),
                                 title = sendMailDto.title,
                                 htmlTemplateName = sendMailDto.htmlTemplateName,
                                 htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
@@ -225,7 +219,7 @@ class MailService(
                     MailEntity(
                         fromAddress = sendMailDto.fromAddress,
                         fromName = sendMailDto.fromName,
-                        toAddress = getValidToAddress.invoke(),
+                        toAddress = getValidToAddress.invoke()(),
                         title = sendMailDto.title,
                         htmlTemplateName = sendMailDto.htmlTemplateName,
                         htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
