@@ -8,7 +8,6 @@ import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
 import jakarta.mail.internet.MimeUtility
 import mu.KotlinLogging
-import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpMethod
 import org.springframework.http.client.ClientHttpResponse
 import org.springframework.mail.javamail.JavaMailSender
@@ -183,6 +182,65 @@ class MailService(
         }
     }
 
+    class Attachments(
+        private val fileAttachmentDtoList: List<FileAttachmentDto>,
+    ) {
+        fun count(): Int {
+            return fileAttachmentDtoList.size
+        }
+
+        fun byteSize(): Long {
+            return fileAttachmentDtoList
+                .map { it.clientHttpResponse.headers.contentLength }
+                .reduceOrNull { acc, size -> acc + size } ?: 0
+        }
+
+        fun applyTo(mimeMessageHelper: MimeMessageHelper) {
+            fileAttachmentDtoList.forEach {
+                mimeMessageHelper.addAttachment(it.name, it.resultFile)
+            }
+        }
+    }
+
+    class GetFileAttachments(
+        private val fileAttachments: List<FileAttachment>,
+        private val restTemplate: RestTemplate,
+    ) {
+        fun create(): () -> Attachments {
+            val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
+                val fileAttachmentDto = restTemplate.execute(
+                    attachment.url,
+                    HttpMethod.GET,
+                    null,
+                    { clientHttpResponse: ClientHttpResponse ->
+                        val id = "file-${index}-${java.util.UUID.randomUUID()}"
+                        val tempFile = File.createTempFile(id, "")
+                        StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
+
+                        FileAttachmentDto(
+                            resultFile = tempFile,
+                            name = attachment.name,
+                            clientHttpResponse = clientHttpResponse
+                        )
+                    })
+
+                if (fileAttachmentDto == null) {
+                    throw RuntimeException("파일 초기화 실패")
+                }
+                if (fileAttachmentDto.resultFile.length() != fileAttachmentDto.clientHttpResponse.headers.contentLength) {
+                    throw RuntimeException("파일 크기 불일치")
+                }
+                if (DataSize.ofKilobytes(2048) <= DataSize.ofBytes(fileAttachmentDto.clientHttpResponse.headers.contentLength)) {
+                    throw RuntimeException("파일 크기 초과")
+                }
+
+                fileAttachmentDto
+            }
+
+            return { Attachments(fileAttachmentDtoList = fileAttachmentDtoList) }
+        }
+    }
+
     private fun sendSingle(sendMailDto: SendMailDto) {
         val getToAddress = GetToAddressFactory(
             mailSpamService = mailSpamService,
@@ -216,6 +274,11 @@ class MailService(
             objectMapper = objectMapper,
         ).create()
 
+        val getAttachments = GetFileAttachments(
+            fileAttachments = sendMailDto.fileAttachments,
+            restTemplate = restTemplate,
+        ).create()
+
         val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
@@ -225,51 +288,16 @@ class MailService(
             mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), getFromName(), "UTF-8"))
             mimeMessageHelper.setTo(getToAddress())
 
-            val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
-                val result = restTemplate.execute(
-                    attachment.url,
-                    HttpMethod.GET,
-                    null,
-                    { clientHttpResponse: ClientHttpResponse ->
-                        val id = "file-${index}-${java.util.UUID.randomUUID()}"
-                        val tempFile = File.createTempFile(id, "")
-                        StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
+            val attachments = getAttachments()
 
-                        FileAttachmentDto(
-                            resultFile = tempFile,
-                            name = attachment.name,
-                            clientHttpResponse = clientHttpResponse
-                        )
-                    })
 
-                if (result == null) {
-                    throw RuntimeException("파일 초기화 실패")
-                }
-                if (result.resultFile.length() != result.clientHttpResponse.headers.contentLength) {
-                    throw RuntimeException("파일 크기 불일치")
-                }
-                if (DataSize.ofKilobytes(2048) <= DataSize.ofBytes(result.clientHttpResponse.headers.contentLength)) {
-                    throw RuntimeException("파일 크기 초과")
-                }
-                result
-            }
-            fileResults.forEach {
-                val fileSystemResource: FileSystemResource = FileSystemResource(File(it.resultFile.absolutePath))
-                mimeMessageHelper.addAttachment(
-                    MimeUtility.encodeText(
-                        it.name,
-                        "UTF-8",
-                        "B"
-                    ), fileSystemResource
-                )
-            }
+            attachments.applyTo(mimeMessageHelper)
+
 
             var postfixTitle = ""
-            if (fileResults.isNotEmpty()) {
-                val totalSize = fileResults
-                    .map { it.clientHttpResponse.headers.contentLength }
-                    .reduceOrNull { acc, size -> acc + size } ?: 0
-                postfixTitle = " (첨부파일 [${fileResults.size}]개, 전체크기 [$totalSize bytes])"
+            if (getAttachments().count() > 0) {
+                val totalSize = getAttachments().byteSize()
+                postfixTitle = " (첨부파일 [${getAttachments().count()}]개, 전체크기 [$totalSize bytes])"
             }
             mimeMessageHelper.setSubject(
                 MimeUtility.encodeText(
@@ -302,6 +330,7 @@ class MailService(
                 )
 
             } else {
+
                 javaMailSender.send(mimeMessage)
                 mailRepository.save(
                     MailEntity(
