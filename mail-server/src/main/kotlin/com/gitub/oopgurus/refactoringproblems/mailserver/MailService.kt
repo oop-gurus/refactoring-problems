@@ -183,28 +183,48 @@ class MailService(
     }
 
     class Attachments(
+        private val getTitle: GetTitle,
         private val fileAttachmentDtoList: List<FileAttachmentDto>,
     ) {
-        fun count(): Int {
-            return fileAttachmentDtoList.size
+        fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
+            fileAttachmentDtoList.forEach {
+                mimeMessageHelper.addAttachment(it.name, it.resultFile)
+            }
         }
 
-        fun byteSize(): Long {
+        fun addSubjectTo(mimeMessageHelper: MimeMessageHelper) {
+            val getTitle = getTitle.create()
+            val subject = MimeUtility.encodeText(
+                appendedTitle(getTitle()),
+                "UTF-8",
+                "B"
+            )
+            mimeMessageHelper.setSubject(subject)
+        }
+
+        private fun appendedTitle(title: String): String {
+            return if (count() > 0) {
+                "$title (첨부파일 [${count()}]개, 전체크기 [${totalByteSize()}] bytes)"
+            } else {
+                title
+            }
+        }
+
+        private fun totalByteSize(): Long {
             return fileAttachmentDtoList
                 .map { it.clientHttpResponse.headers.contentLength }
                 .reduceOrNull { acc, size -> acc + size } ?: 0
         }
 
-        fun applyTo(mimeMessageHelper: MimeMessageHelper) {
-            fileAttachmentDtoList.forEach {
-                mimeMessageHelper.addAttachment(it.name, it.resultFile)
-            }
+        private fun count(): Int {
+            return fileAttachmentDtoList.size
         }
     }
 
     class GetFileAttachments(
         private val fileAttachments: List<FileAttachment>,
         private val restTemplate: RestTemplate,
+        private val getTitle: GetTitle,
     ) {
         fun create(): () -> Attachments {
             val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
@@ -237,7 +257,10 @@ class MailService(
                 fileAttachmentDto
             }
 
-            return { Attachments(fileAttachmentDtoList = fileAttachmentDtoList) }
+            return { Attachments(
+                getTitle = getTitle,
+                fileAttachmentDtoList = fileAttachmentDtoList
+            ) }
         }
     }
 
@@ -277,6 +300,9 @@ class MailService(
         val getAttachments = GetFileAttachments(
             fileAttachments = sendMailDto.fileAttachments,
             restTemplate = restTemplate,
+            getTitle =  GetTitle(
+                title = sendMailDto.title,
+            ),
         ).create()
 
         val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
@@ -289,24 +315,8 @@ class MailService(
             mimeMessageHelper.setTo(getToAddress())
 
             val attachments = getAttachments()
-
-
-            attachments.applyTo(mimeMessageHelper)
-
-
-            var postfixTitle = ""
-            if (getAttachments().count() > 0) {
-                val totalSize = getAttachments().byteSize()
-                postfixTitle = " (첨부파일 [${getAttachments().count()}]개, 전체크기 [$totalSize bytes])"
-            }
-            mimeMessageHelper.setSubject(
-                MimeUtility.encodeText(
-                    getTitle() + postfixTitle,
-                    "UTF-8",
-                    "B"
-                )
-            ) // Base64 encoding
-
+            attachments.addFilesTo(mimeMessageHelper)
+            attachments.addSubjectTo(mimeMessageHelper)
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
