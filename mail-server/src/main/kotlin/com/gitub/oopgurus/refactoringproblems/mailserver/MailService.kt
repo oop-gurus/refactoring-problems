@@ -416,6 +416,7 @@ class PostOfficeBuilder(
     private val mailSpamService: MailSpamService,
 ) {
     private var getToAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
+    private var getFromAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
 
     fun toAddress(toAddress: String): PostOfficeBuilder {
         this.getToAddress = MailService.GetToAddressFactory(
@@ -425,4 +426,13 @@ class PostOfficeBuilder(
 
         return this
     }
+
+    fun fromAddress(fromAddress: String): PostOfficeBuilder {
+        this.getFromAddress = MailService.GetFromAddressFactory(
+            fromAddress = fromAddress,
+        ).create()
+
+        return this
+    }
+
 }
