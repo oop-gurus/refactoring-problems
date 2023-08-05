@@ -116,11 +116,10 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        val getValidToAddressFactory = StatefulGetToAddressFactory(
+        val getToAddress = StatefulGetToAddressFactory(
             mailSpamService = mailSpamService,
             toAddress = sendMailDto.toAddress,
-        )
-        val getToAddress = getValidToAddressFactory.create()
+        ).create()
 
         val getFromAddress = StatefulGetFromAddressFactory(
             fromAddress = sendMailDto.fromAddress,
@@ -246,7 +245,7 @@ class MailService(
                 MailEntity(
                     fromAddress = getFromAddress(),
                     fromName = sendMailDto.fromName,
-                    toAddress = sendMailDto.toAddress,
+                    toAddress = getToAddress(),
                     title = sendMailDto.title,
                     htmlTemplateName = sendMailDto.htmlTemplateName,
                     htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
