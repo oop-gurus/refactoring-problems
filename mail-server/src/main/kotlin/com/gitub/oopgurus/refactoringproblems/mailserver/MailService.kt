@@ -182,7 +182,7 @@ class MailService(
         }
     }
 
-    class Attachments(
+    class MimeMessageFactory(
         private val javaMailSender: JavaMailSender,
         private val getTitle: () -> String,
         private val getHtmlTemplate: () -> Template,
@@ -252,7 +252,7 @@ class MailService(
         }
     }
 
-    class GetFileAttachments(
+    class GetMimeMessageFactory(
         private val javaMailSender: JavaMailSender,
         private val fileAttachments: List<FileAttachment>,
         private val restTemplate: RestTemplate,
@@ -263,7 +263,7 @@ class MailService(
         private val getFromName: () -> String,
         private val getToAddress: () -> String,
     ) {
-        fun create(): () -> Attachments {
+        fun create(): () -> MimeMessageFactory {
             val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
                 val fileAttachmentDto = restTemplate.execute(
                     attachment.url,
@@ -295,7 +295,7 @@ class MailService(
             }
 
             return {
-                Attachments(
+                MimeMessageFactory(
                     javaMailSender = javaMailSender,
                     getTitle = getTitle,
                     getHtmlTemplate = getHtmlTemplate,
@@ -342,7 +342,7 @@ class MailService(
             objectMapper = objectMapper,
         ).create()
 
-        val getAttachments = GetFileAttachments(
+        val getAttachments = GetMimeMessageFactory(
             javaMailSender = javaMailSender,
             fileAttachments = sendMailDto.fileAttachments,
             restTemplate = restTemplate,
