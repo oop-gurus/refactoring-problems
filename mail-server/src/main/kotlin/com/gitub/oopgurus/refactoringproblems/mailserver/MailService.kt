@@ -263,7 +263,7 @@ class MailService(
         private val getFromName: () -> String,
         private val getToAddress: () -> String,
     ) {
-        fun create(): () -> MimeMessageFactory {
+        fun create(): MimeMessageFactory {
             val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
                 val fileAttachmentDto = restTemplate.execute(
                     attachment.url,
@@ -294,18 +294,17 @@ class MailService(
                 fileAttachmentDto
             }
 
-            return {
-                MimeMessageFactory(
-                    javaMailSender = javaMailSender,
-                    getTitle = getTitle,
-                    getHtmlTemplate = getHtmlTemplate,
-                    getHtmlTemplateParameters = getHtmlTemplateParameters,
-                    getFromAddress = getFromAddress,
-                    getFromName = getFromName,
-                    getToAddress = getToAddress,
-                    fileAttachmentDtoList = fileAttachmentDtoList,
-                )
-            }
+            return MimeMessageFactory(
+                javaMailSender = javaMailSender,
+                getTitle = getTitle,
+                getHtmlTemplate = getHtmlTemplate,
+                getHtmlTemplateParameters = getHtmlTemplateParameters,
+                getFromAddress = getFromAddress,
+                getFromName = getFromName,
+                getToAddress = getToAddress,
+                fileAttachmentDtoList = fileAttachmentDtoList,
+            )
+
         }
     }
 
@@ -342,7 +341,7 @@ class MailService(
             objectMapper = objectMapper,
         ).create()
 
-        val getAttachments = GetMimeMessageFactory(
+        val attachments = GetMimeMessageFactory(
             javaMailSender = javaMailSender,
             fileAttachments = sendMailDto.fileAttachments,
             restTemplate = restTemplate,
@@ -355,7 +354,6 @@ class MailService(
         ).create()
 
         try {
-            val attachments = getAttachments()
             val mimeMessage = attachments.newMimeMessage()
 
             if (sendMailDto.sendAfterSeconds != null) {
