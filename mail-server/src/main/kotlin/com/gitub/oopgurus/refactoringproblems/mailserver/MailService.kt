@@ -41,6 +41,8 @@ class MailService(
     }
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
+
+
     // 객체를 일단 만들면 뭐든 할 수 있다
     //   - 메일 발송 실패할 수도 있는거 아님? -> 이건 예외가 아니라 비즈니스 실패이므로 객체생성 ok
     // from validation
@@ -67,6 +69,16 @@ class MailService(
         sendMailDtos.forEach {
             sendSingle(it)
         }
+    }
+
+    // sendMailDto.toAddress 를 사용하기 위해서 많은 관문이 있음
+    // 1. 메일 발송 전에 수신자 도메인이 차단되어 있는지 확인
+    // 2. 메일 발송 전에 최근 메일 발송 실패로 인해 차단되어 있는지 확인
+    // 3. 메일 발송 전에 수신자 이메일 형식이 맞는지 확인
+    // -> 이 모든걸 호출하는 사람이 신경쓰지 말고, 그냥 어떤 객체가 있고 걔한테 달라고 물어보면 안될까?
+    // -> 그런 아이디어로 만들어진게 GetValidToAddress 인터페이스임
+    fun interface GetValidToAddress {
+        fun invoke(): String
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
