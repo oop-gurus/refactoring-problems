@@ -411,3 +411,18 @@ class MailService(
     }
 }
 
+@Component
+class PostOfficeBuilder(
+    private val mailSpamService: MailSpamService,
+) {
+    private var getToAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
+
+    fun toAddress(toAddress: String): PostOfficeBuilder {
+        this.getToAddress = MailService.GetToAddressFactory(
+            mailSpamService = mailSpamService,
+            toAddress = toAddress,
+        ).create()
+
+        return this
+    }
+}
