@@ -107,6 +107,22 @@ class MailService(
         }
     }
 
+    class GetHtmlTemplate(
+        private val mailTemplateRepository: MailTemplateRepository,
+        private val handlebars: Handlebars,
+        private val htmlTemplateName: String,
+    ) {
+        fun create(): () -> Template {
+            val htmlTemplate = mailTemplateRepository.findByName(htmlTemplateName)
+            if (htmlTemplate == null) {
+                return { throw RuntimeException("템플릿이 존재하지 않습니다: [$htmlTemplateName]") }
+            }
+            val template = handlebars.compileInline(htmlTemplate.htmlBody)
+            return { template }
+        }
+    }
+
+
     private fun sendSingle(sendMailDto: SendMailDto) {
         val getToAddress = GetToAddressFactory(
             mailSpamService = mailSpamService,
@@ -117,6 +133,11 @@ class MailService(
             fromAddress = sendMailDto.fromAddress,
         ).create()
 
+        val getHtmlTemplate = GetHtmlTemplate(
+            mailTemplateRepository = mailTemplateRepository,
+            handlebars = handlebars,
+            htmlTemplateName = sendMailDto.htmlTemplateName,
+        ).create()
 
 
         if (sendMailDto.title.isBlank()) {
@@ -129,10 +150,7 @@ class MailService(
             throw RuntimeException("발신자 이름이 비어있습니다")
         }
 
-        val htmlTemplate = mailTemplateRepository.findByName(sendMailDto.htmlTemplateName)
-            ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${sendMailDto.htmlTemplateName}]")
-        val template: Template = handlebars.compileInline(htmlTemplate.htmlBody)
-        val html = template.apply(sendMailDto.htmlTemplateParameters)
+        val html = getHtmlTemplate().apply(sendMailDto.htmlTemplateParameters)
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
         try {
