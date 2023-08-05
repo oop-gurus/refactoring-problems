@@ -106,7 +106,7 @@ class MailService(
         }
     }
 
-    class GetHtmlTemplate(
+    class GetHtmlTemplateFactory(
         private val mailTemplateRepository: MailTemplateRepository,
         private val handlebars: Handlebars,
         private val getHtmlTemplateName: () -> String,
@@ -122,7 +122,7 @@ class MailService(
         }
     }
 
-    class GetTitle(
+    class GetTitleFactory(
         private val title: String,
     ) {
         fun create(): () -> String {
@@ -133,7 +133,7 @@ class MailService(
         }
     }
 
-    class GetFromName(
+    class GetFromNameFactory(
         private val fromName: String,
     ) {
         fun create(): () -> String {
@@ -144,7 +144,7 @@ class MailService(
         }
     }
 
-    class GetHtmlTemplateName(
+    class GetHtmlTemplateNameFactory(
         private val htmlTemplateName: String,
     ) {
         fun create(): () -> String {
@@ -155,7 +155,7 @@ class MailService(
         }
     }
 
-    class GetHtmlTemplateParameters(
+    class GetHtmlTemplateParametersFactory(
         private val htmlTemplateParameters: Map<String, Any>,
         private val objectMapper: ObjectMapper,
     ) {
@@ -183,12 +183,12 @@ class MailService(
     }
 
     class Attachments(
-        private val getTitle: GetTitle,
-        private val getHtmlTemplate: GetHtmlTemplate,
-        private val getHtmlTemplateParameters: GetHtmlTemplateParameters,
-        private val getFromAddressFactory: GetFromAddressFactory,
-        private val getFromName: GetFromName,
-        private val getToAddressFactory: GetToAddressFactory,
+        private val getTitle: () -> String,
+        private val getHtmlTemplate: () -> Template,
+        private val getHtmlTemplateParameters: () -> HtmlTemplateParameters,
+        private val getFromAddress: () -> String,
+        private val getFromName: () -> String,
+        private val getToAddress: () -> String,
         private val fileAttachmentDtoList: List<FileAttachmentDto>,
     ) {
         fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
@@ -198,7 +198,6 @@ class MailService(
         }
 
         fun addSubjectTo(mimeMessageHelper: MimeMessageHelper) {
-            val getTitle = getTitle.create()
             val subject = MimeUtility.encodeText(
                 appendedTitle(getTitle()),
                 "UTF-8",
@@ -226,20 +225,14 @@ class MailService(
         }
 
         fun addToAddressTo(mimeMessageHelper: MimeMessageHelper) {
-            val getFromAddress = getFromAddressFactory.create()
-            val getFromName = getFromName.create()
             mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), getFromName(), "UTF-8"))
         }
 
         fun addFromAddressTo(mimeMessageHelper: MimeMessageHelper) {
-            val getToAddress = getToAddressFactory.create()
             mimeMessageHelper.setTo(getToAddress())
         }
 
         fun addTextTo(mimeMessageHelper: MimeMessageHelper) {
-            val getHtmlTemplate = getHtmlTemplate.create()
-            val getHtmlTemplateParameters = getHtmlTemplateParameters.create()
-
             val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
             mimeMessageHelper.setText(html, true)
         }
@@ -248,12 +241,12 @@ class MailService(
     class GetFileAttachments(
         private val fileAttachments: List<FileAttachment>,
         private val restTemplate: RestTemplate,
-        private val getTitle: GetTitle,
-        private val getHtmlTemplate: GetHtmlTemplate,
-        private val getHtmlTemplateParameters: GetHtmlTemplateParameters,
-        private val getFromAddressFactory: GetFromAddressFactory,
-        private val getFromName: GetFromName,
-        private val getToAddressFactory: GetToAddressFactory,
+        private val getTitle: () -> String,
+        private val getHtmlTemplate: () -> Template,
+        private val getHtmlTemplateParameters: () -> HtmlTemplateParameters,
+        private val getFromAddress: () -> String,
+        private val getFromName: () -> String,
+        private val getToAddress: () -> String,
     ) {
         fun create(): () -> Attachments {
             val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
@@ -291,9 +284,9 @@ class MailService(
                     getTitle = getTitle,
                     getHtmlTemplate = getHtmlTemplate,
                     getHtmlTemplateParameters = getHtmlTemplateParameters,
-                    getFromAddressFactory = getFromAddressFactory,
+                    getFromAddress = getFromAddress,
                     getFromName = getFromName,
-                    getToAddressFactory = getToAddressFactory,
+                    getToAddress = getToAddress,
                     fileAttachmentDtoList = fileAttachmentDtoList,
                 )
             }
@@ -310,25 +303,25 @@ class MailService(
             fromAddress = sendMailDto.fromAddress,
         ).create()
 
-        val getHtmlTemplateName = GetHtmlTemplateName(
+        val getHtmlTemplateName = GetHtmlTemplateNameFactory(
             htmlTemplateName = sendMailDto.htmlTemplateName,
         ).create()
 
-        val getHtmlTemplate = GetHtmlTemplate(
+        val getHtmlTemplate = GetHtmlTemplateFactory(
             mailTemplateRepository = mailTemplateRepository,
             handlebars = handlebars,
             getHtmlTemplateName = getHtmlTemplateName,
         ).create()
 
-        val getTitle = GetTitle(
+        val getTitle = GetTitleFactory(
             title = sendMailDto.title,
         ).create()
 
-        val getFromName = GetFromName(
+        val getFromName = GetFromNameFactory(
             fromName = sendMailDto.fromName,
         ).create()
 
-        val getHtmlTemplateParameters = GetHtmlTemplateParameters(
+        val getHtmlTemplateParameters = GetHtmlTemplateParametersFactory(
             htmlTemplateParameters = sendMailDto.htmlTemplateParameters,
             objectMapper = objectMapper,
         ).create()
@@ -336,31 +329,14 @@ class MailService(
         val getAttachments = GetFileAttachments(
             fileAttachments = sendMailDto.fileAttachments,
             restTemplate = restTemplate,
-            getTitle = GetTitle(
-                title = sendMailDto.title,
-            ),
-            getHtmlTemplate = GetHtmlTemplate(
-                mailTemplateRepository = mailTemplateRepository,
-                handlebars = handlebars,
-                getHtmlTemplateName = getHtmlTemplateName,
-            ),
-            getHtmlTemplateParameters = GetHtmlTemplateParameters(
-                htmlTemplateParameters = sendMailDto.htmlTemplateParameters,
-                objectMapper = objectMapper,
-            ),
-            getFromAddressFactory = GetFromAddressFactory(
-                fromAddress = sendMailDto.fromAddress,
-            ),
-            getFromName = GetFromName(
-                fromName = sendMailDto.fromName,
-            ),
-            getToAddressFactory = GetToAddressFactory(
-                mailSpamService = mailSpamService,
-                toAddress = sendMailDto.toAddress,
-            ),
+            getTitle = getTitle,
+            getHtmlTemplate = getHtmlTemplate,
+            getHtmlTemplateParameters = getHtmlTemplateParameters,
+            getFromAddress = getFromAddress,
+            getFromName = getFromName,
+            getToAddress = getToAddress,
         ).create()
 
-        val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
         try {
