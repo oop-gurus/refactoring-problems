@@ -182,88 +182,11 @@ class MailService(
         }
     }
 
-    class MimeMessageFactory(
-        private val javaMailSender: JavaMailSender,
-        private val getTitle: () -> String,
-        private val getHtmlTemplate: () -> Template,
-        private val getHtmlTemplateParameters: () -> HtmlTemplateParameters,
-        private val getFromAddress: () -> String,
-        private val getFromName: () -> String,
-        private val getToAddress: () -> String,
-        private val fileAttachmentDtoList: List<FileAttachmentDto>,
-    ) {
-        private fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
-            fileAttachmentDtoList.forEach {
-                mimeMessageHelper.addAttachment(it.name, it.resultFile)
-            }
-        }
-
-        private fun addSubjectTo(mimeMessageHelper: MimeMessageHelper) {
-            val subject = MimeUtility.encodeText(
-                appendedTitle(getTitle()),
-                "UTF-8",
-                "B"
-            )
-            mimeMessageHelper.setSubject(subject)
-        }
-
-        private fun appendedTitle(title: String): String {
-            return if (count() > 0) {
-                "$title (첨부파일 [${count()}]개, 전체크기 [${totalByteSize()}] bytes)"
-            } else {
-                title
-            }
-        }
-
-        private fun totalByteSize(): Long {
-            return fileAttachmentDtoList
-                .map { it.clientHttpResponse.headers.contentLength }
-                .reduceOrNull { acc, size -> acc + size } ?: 0
-        }
-
-        private fun count(): Int {
-            return fileAttachmentDtoList.size
-        }
-
-        private fun addToAddressTo(mimeMessageHelper: MimeMessageHelper) {
-            mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), getFromName(), "UTF-8"))
-        }
-
-        private fun addFromAddressTo(mimeMessageHelper: MimeMessageHelper) {
-            mimeMessageHelper.setTo(getToAddress())
-        }
-
-        private fun addTextTo(mimeMessageHelper: MimeMessageHelper) {
-            val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
-            mimeMessageHelper.setText(html, true)
-        }
-
-        fun newOne(): MimeMessage {
-            val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
-            val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
-
-            addFilesTo(mimeMessageHelper)
-            addSubjectTo(mimeMessageHelper)
-            addToAddressTo(mimeMessageHelper)
-            addFromAddressTo(mimeMessageHelper)
-            addTextTo(mimeMessageHelper)
-
-            return mimeMessage
-        }
-    }
-
-    class MimeMessageFactoryFactory(
-        private val javaMailSender: JavaMailSender,
-        private val fileAttachments: List<FileAttachment>,
+    class GetFileAttachmentDtoListFactory(
         private val restTemplate: RestTemplate,
-        private val getTitle: () -> String,
-        private val getHtmlTemplate: () -> Template,
-        private val getHtmlTemplateParameters: () -> HtmlTemplateParameters,
-        private val getFromAddress: () -> String,
-        private val getFromName: () -> String,
-        private val getToAddress: () -> String,
+        private val fileAttachments: List<FileAttachment>,
     ) {
-        fun create(): MimeMessageFactory {
+        fun create(): () -> List<FileAttachmentDto> {
             val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
                 val fileAttachmentDto = restTemplate.execute(
                     attachment.url,
@@ -294,17 +217,77 @@ class MailService(
                 fileAttachmentDto
             }
 
-            return MimeMessageFactory(
-                javaMailSender = javaMailSender,
-                getTitle = getTitle,
-                getHtmlTemplate = getHtmlTemplate,
-                getHtmlTemplateParameters = getHtmlTemplateParameters,
-                getFromAddress = getFromAddress,
-                getFromName = getFromName,
-                getToAddress = getToAddress,
-                fileAttachmentDtoList = fileAttachmentDtoList,
-            )
+            return { fileAttachmentDtoList }
+        }
+    }
 
+    class MimeMessageFactory(
+        private val javaMailSender: JavaMailSender,
+        private val getTitle: () -> String,
+        private val getHtmlTemplate: () -> Template,
+        private val getHtmlTemplateParameters: () -> HtmlTemplateParameters,
+        private val getFromAddress: () -> String,
+        private val getFromName: () -> String,
+        private val getToAddress: () -> String,
+        private val getFileAttachmentDtoList: () -> List<FileAttachmentDto>,
+    ) {
+        private fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
+            getFileAttachmentDtoList().forEach {
+                mimeMessageHelper.addAttachment(it.name, it.resultFile)
+            }
+        }
+
+        private fun addSubjectTo(mimeMessageHelper: MimeMessageHelper) {
+            val subject = MimeUtility.encodeText(
+                appendedTitle(getTitle()),
+                "UTF-8",
+                "B"
+            )
+            mimeMessageHelper.setSubject(subject)
+        }
+
+        private fun appendedTitle(title: String): String {
+            return if (count() > 0) {
+                "$title (첨부파일 [${count()}]개, 전체크기 [${totalByteSize()}] bytes)"
+            } else {
+                title
+            }
+        }
+
+        private fun totalByteSize(): Long {
+            return getFileAttachmentDtoList()
+                .map { it.clientHttpResponse.headers.contentLength }
+                .reduceOrNull { acc, size -> acc + size } ?: 0
+        }
+
+        private fun count(): Int {
+            return getFileAttachmentDtoList().size
+        }
+
+        private fun addToAddressTo(mimeMessageHelper: MimeMessageHelper) {
+            mimeMessageHelper.setFrom(InternetAddress(getFromAddress(), getFromName(), "UTF-8"))
+        }
+
+        private fun addFromAddressTo(mimeMessageHelper: MimeMessageHelper) {
+            mimeMessageHelper.setTo(getToAddress())
+        }
+
+        private fun addTextTo(mimeMessageHelper: MimeMessageHelper) {
+            val html = getHtmlTemplate().apply(getHtmlTemplateParameters().asMap())
+            mimeMessageHelper.setText(html, true)
+        }
+
+        fun newOne(): MimeMessage {
+            val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
+            val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
+
+            addFilesTo(mimeMessageHelper)
+            addSubjectTo(mimeMessageHelper)
+            addToAddressTo(mimeMessageHelper)
+            addFromAddressTo(mimeMessageHelper)
+            addTextTo(mimeMessageHelper)
+
+            return mimeMessage
         }
     }
 
@@ -341,17 +324,21 @@ class MailService(
             objectMapper = objectMapper,
         ).create()
 
-        val mimeMessageFactory = MimeMessageFactoryFactory(
-            javaMailSender = javaMailSender,
+        val getFileAttachmentDtoList = GetFileAttachmentDtoListFactory(
             fileAttachments = sendMailDto.fileAttachments,
             restTemplate = restTemplate,
+        ).create()
+
+        val mimeMessageFactory = MimeMessageFactory(
+            javaMailSender = javaMailSender,
             getTitle = getTitle,
             getHtmlTemplate = getHtmlTemplate,
             getHtmlTemplateParameters = getHtmlTemplateParameters,
             getFromAddress = getFromAddress,
             getFromName = getFromName,
             getToAddress = getToAddress,
-        ).create()
+            getFileAttachmentDtoList = getFileAttachmentDtoList
+        )
 
         try {
             val mimeMessage = mimeMessageFactory.newOne()
