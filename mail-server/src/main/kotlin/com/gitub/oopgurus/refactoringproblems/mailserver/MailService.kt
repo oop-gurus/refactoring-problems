@@ -4,21 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.jknack.handlebars.Handlebars
 import com.github.jknack.handlebars.Helper
 import com.github.jknack.handlebars.Template
-import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
-import jakarta.mail.internet.MimeUtility
 import mu.KotlinLogging
-import org.springframework.core.io.FileSystemResource
-import org.springframework.http.HttpMethod
-import org.springframework.http.client.ClientHttpResponse
 import org.springframework.mail.javamail.JavaMailSender
-import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Component
-import org.springframework.util.StreamUtils
-import org.springframework.util.unit.DataSize
 import org.springframework.web.client.RestTemplate
-import java.io.File
-import java.io.FileOutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -31,6 +21,7 @@ class MailService(
     private val mailRepository: MailRepository,
     private val objectMapper: ObjectMapper,
     private val mailSpamService: MailSpamService,
+    private val mimeMessageCreator: MimeMessageCreator,
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -40,12 +31,6 @@ class MailService(
         })
     }
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
-
-    data class FileAttachmentDto(
-        val resultFile: File,
-        val name: String,
-        val clientHttpResponse: ClientHttpResponse,
-    )
 
     fun send(sendMailDtoList: List<SendMailDto>) {
         sendMailDtoList.forEach {
@@ -67,65 +52,7 @@ class MailService(
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
         try {
-            val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
-            mimeMessageHelper.setText(html, true)
-            mimeMessageHelper.setFrom(InternetAddress(sendMailDto.fromAddress.value, sendMailDto.fromName.value, "UTF-8"))
-            mimeMessageHelper.setTo(sendMailDto.toAddress.value)
-
-            val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
-                val result = restTemplate.execute(
-                    attachment.url,
-                    HttpMethod.GET,
-                    null,
-                    { clientHttpResponse: ClientHttpResponse ->
-                        val id = "file-${index}-${java.util.UUID.randomUUID()}"
-                        val tempFile = File.createTempFile(id, "")
-                        StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
-
-                        FileAttachmentDto(
-                            resultFile = tempFile,
-                            name = attachment.name,
-                            clientHttpResponse = clientHttpResponse
-                        )
-                    })
-
-                if (result == null) {
-                    throw RuntimeException("파일 초기화 실패")
-                }
-                if (result.resultFile.length() != result.clientHttpResponse.headers.contentLength) {
-                    throw RuntimeException("파일 크기 불일치")
-                }
-                if (DataSize.ofKilobytes(2048) <= DataSize.ofBytes(result.clientHttpResponse.headers.contentLength)) {
-                    throw RuntimeException("파일 크기 초과")
-                }
-                result
-            }
-            fileResults.forEach {
-                val fileSystemResource: FileSystemResource = FileSystemResource(File(it.resultFile.absolutePath))
-                mimeMessageHelper.addAttachment(
-                    MimeUtility.encodeText(
-                        it.name,
-                        "UTF-8",
-                        "B"
-                    ), fileSystemResource
-                )
-            }
-
-            var postfixTitle = ""
-            if (fileResults.isNotEmpty()) {
-                val totalSize = fileResults
-                    .map { it.clientHttpResponse.headers.contentLength }
-                    .reduceOrNull { acc, size -> acc + size } ?: 0
-                postfixTitle = " (첨부파일 [${fileResults.size}]개, 전체크기 [$totalSize bytes])"
-            }
-            mimeMessageHelper.setSubject(
-                MimeUtility.encodeText(
-                    sendMailDto.title.value + postfixTitle,
-                    "UTF-8",
-                    "B"
-                )
-            ) // Base64 encoding
-
+            mimeMessageCreator.create(sendMailDto)
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
@@ -175,6 +102,7 @@ class MailService(
                     isSuccess = false,
                 )
             )
+
             log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
         }
     }
