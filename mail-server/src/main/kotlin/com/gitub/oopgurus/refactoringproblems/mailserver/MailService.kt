@@ -25,12 +25,12 @@ import java.util.concurrent.TimeUnit
 
 @Component
 class MailService(
-    private val javaMailSender: JavaMailSender,
-    private val restTemplate: RestTemplate,
-    private val mailTemplateRepository: MailTemplateRepository,
-    private val mailRepository: MailRepository,
-    private val objectMapper: ObjectMapper,
-    private val mailSpamService: MailSpamService,
+        private val javaMailSender: JavaMailSender,
+        private val restTemplate: RestTemplate,
+        private val mailTemplateRepository: MailTemplateRepository,
+        private val mailRepository: MailRepository,
+        private val objectMapper: ObjectMapper,
+        private val mailSpamService: MailSpamService,
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -42,9 +42,9 @@ class MailService(
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
     data class FileAttachmentDto(
-        val resultFile: File,
-        val name: String,
-        val clientHttpResponse: ClientHttpResponse,
+            val resultFile: File,
+            val name: String,
+            val clientHttpResponse: ClientHttpResponse,
     )
 
     fun send(sendMailDtos: List<SendMailDto>) {
@@ -85,7 +85,7 @@ class MailService(
         }
 
         val htmlTemplate = mailTemplateRepository.findByName(sendMailDto.htmlTemplateName)
-            ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${sendMailDto.htmlTemplateName}]")
+                ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${sendMailDto.htmlTemplateName}]")
         val template: Template = handlebars.compileInline(htmlTemplate.htmlBody)
         val html = template.apply(sendMailDto.htmlTemplateParameters)
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
@@ -98,20 +98,20 @@ class MailService(
 
             val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
                 val result = restTemplate.execute(
-                    attachment.url,
-                    HttpMethod.GET,
-                    null,
-                    { clientHttpResponse: ClientHttpResponse ->
-                        val id = "file-${index}-${java.util.UUID.randomUUID()}"
-                        val tempFile = File.createTempFile(id, "")
-                        StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
+                        attachment.url,
+                        HttpMethod.GET,
+                        null,
+                        { clientHttpResponse: ClientHttpResponse ->
+                            val id = "file-${index}-${java.util.UUID.randomUUID()}"
+                            val tempFile = File.createTempFile(id, "")
+                            StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
 
-                        FileAttachmentDto(
-                            resultFile = tempFile,
-                            name = attachment.name,
-                            clientHttpResponse = clientHttpResponse
-                        )
-                    })
+                            FileAttachmentDto(
+                                    resultFile = tempFile,
+                                    name = attachment.name,
+                                    clientHttpResponse = clientHttpResponse
+                            )
+                        })
 
                 if (result == null) {
                     throw RuntimeException("파일 초기화 실패")
@@ -127,36 +127,55 @@ class MailService(
             fileResults.forEach {
                 val fileSystemResource: FileSystemResource = FileSystemResource(File(it.resultFile.absolutePath))
                 mimeMessageHelper.addAttachment(
-                    MimeUtility.encodeText(
-                        it.name,
-                        "UTF-8",
-                        "B"
-                    ), fileSystemResource
+                        MimeUtility.encodeText(
+                                it.name,
+                                "UTF-8",
+                                "B"
+                        ), fileSystemResource
                 )
             }
 
             var postfixTitle = ""
             if (fileResults.isNotEmpty()) {
                 val totalSize = fileResults
-                    .map { it.clientHttpResponse.headers.contentLength }
-                    .reduceOrNull { acc, size -> acc + size } ?: 0
+                        .map { it.clientHttpResponse.headers.contentLength }
+                        .reduceOrNull { acc, size -> acc + size } ?: 0
                 postfixTitle = " (첨부파일 [${fileResults.size}]개, 전체크기 [$totalSize bytes])"
             }
             mimeMessageHelper.setSubject(
-                MimeUtility.encodeText(
-                    sendMailDto.title + postfixTitle,
-                    "UTF-8",
-                    "B"
-                )
+                    MimeUtility.encodeText(
+                            sendMailDto.title + postfixTitle,
+                            "UTF-8",
+                            "B"
+                    )
             ) // Base64 encoding
 
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
-                    {
-                        javaMailSender.send(mimeMessage)
-                        mailRepository.save(
-                            MailEntity(
+                        {
+                            javaMailSender.send(mimeMessage)
+                            mailRepository.save(
+                                    MailEntity(
+                                            fromAddress = sendMailDto.fromAddress,
+                                            fromName = sendMailDto.fromName,
+                                            toAddress = sendMailDto.toAddress,
+                                            title = sendMailDto.title,
+                                            htmlTemplateName = sendMailDto.htmlTemplateName,
+                                            htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                                            isSuccess = true,
+                                    )
+                            )
+                            log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
+                        },
+                        sendMailDto.sendAfterSeconds,
+                        TimeUnit.SECONDS
+                )
+
+            } else {
+                javaMailSender.send(mimeMessage)
+                mailRepository.save(
+                        MailEntity(
                                 fromAddress = sendMailDto.fromAddress,
                                 fromName = sendMailDto.fromName,
                                 toAddress = sendMailDto.toAddress,
@@ -164,56 +183,23 @@ class MailService(
                                 htmlTemplateName = sendMailDto.htmlTemplateName,
                                 htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                                 isSuccess = true,
-                            )
                         )
-                        log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-                    },
-                    sendMailDto.sendAfterSeconds,
-                    TimeUnit.SECONDS
-                )
-
-            } else {
-                javaMailSender.send(mimeMessage)
-                mailRepository.save(
-                    MailEntity(
-                        fromAddress = sendMailDto.fromAddress,
-                        fromName = sendMailDto.fromName,
-                        toAddress = sendMailDto.toAddress,
-                        title = sendMailDto.title,
-                        htmlTemplateName = sendMailDto.htmlTemplateName,
-                        htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
-                        isSuccess = true,
-                    )
                 )
                 log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
             }
         } catch (e: Exception) {
             mailRepository.save(
-                MailEntity(
-                    fromAddress = sendMailDto.fromAddress,
-                    fromName = sendMailDto.fromName,
-                    toAddress = sendMailDto.toAddress,
-                    title = sendMailDto.title,
-                    htmlTemplateName = sendMailDto.htmlTemplateName,
-                    htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
-                    isSuccess = false,
-                )
+                    MailEntity(
+                            fromAddress = sendMailDto.fromAddress,
+                            fromName = sendMailDto.fromName,
+                            toAddress = sendMailDto.toAddress,
+                            title = sendMailDto.title,
+                            htmlTemplateName = sendMailDto.htmlTemplateName,
+                            htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                            isSuccess = false,
+                    )
             )
             log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
-        }
-    }
-
-    fun creatMailTemplate(createMailTemplateDtos: List<CreateMailTemplateDto>) {
-        createMailTemplateDtos.forEach {
-            if (it.htmlBody.isBlank()) {
-                throw IllegalArgumentException("htmlBody is blank")
-            }
-            mailTemplateRepository.save(
-                MailTemplateEntity(
-                    name = it.name,
-                    htmlBody = it.htmlBody,
-                )
-            )
         }
     }
 }

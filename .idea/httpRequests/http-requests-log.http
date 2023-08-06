@@ -1,0 +1,422 @@
+GET http://127.0.0.1:8080/v1/accounts/3
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154606-1.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 700
+}
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/3
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154606.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 701
+}
+
+<> 2023-07-08T154606.500.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/3/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 701
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 200
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 500
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154605-3.200.json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/2
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154605-2.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/2/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 100
+}
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/2/closed
+Accept: application/json
+Content-Type: application/json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/2
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154605-1.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/2/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 500
+}
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/2
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154605.200.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/2/frozen
+Accept: application/json
+Content-Type: application/json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/2/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/2/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 1200.56
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154604-1.200.json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/1
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154604.200.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/1/frozen
+Accept: application/json
+Content-Type: application/json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/1/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-07-08T154602.200.json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/3
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160815-4.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 700
+}
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/3
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160815-3.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 701
+}
+
+<> 2023-06-30T160815.500.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/3/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 701
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 200
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 500
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160815-2.200.json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/2
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160815-1.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/2/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 100
+}
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/2/closed
+Accept: application/json
+Content-Type: application/json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/2
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160815.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/2/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 500
+}
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/2
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160814.200.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/2/frozen
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160814.500.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/2/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/2/deposit
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 1200.56
+}
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160811-1.200.json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/1
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160811.200.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/1/frozen
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160811.500.json
+
+###
+
+PUT http://127.0.0.1:8080/v1/accounts/1/holder-verified
+Accept: application/json
+Content-Type: application/json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160805.200.json
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/3
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160651-1.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 700
+}
+
+###
+
+GET http://127.0.0.1:8080/v1/accounts/3
+Accept: application/json
+Content-Type: application/json
+
+<> 2023-06-30T160651.200.json
+
+###
+
+POST http://127.0.0.1:8080/v1/accounts/3/withdraw
+Accept: application/json
+Content-Type: application/json
+
+{
+  "amount": 701
+}
+
+<> 2023-06-30T160650-1.500.json
+
+###
+

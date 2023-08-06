@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gitub.lette1394.refactoringproblems.accounts.AccountServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-07-02T11:10:09" hostname="oseungjaeui-MacBookAir.local" time="1.612">
+  <properties/>
+  <testcase name="freezeAccount()" classname="com.gitub.lette1394.refactoringproblems.accounts.AccountServiceTest" time="1.612"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

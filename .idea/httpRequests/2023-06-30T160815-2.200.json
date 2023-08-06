@@ -1,0 +1,8 @@
+{
+  "accountId": 3,
+  "auth": "UNVERIFIED",
+  "balance": 0,
+  "isFrozen": false,
+  "isVerified": false,
+  "isClosed": false
+}

@@ -11,4 +11,7 @@ class MailBeanConfig {
     fun restTemplate(): RestTemplate {
         return RestTemplate()
     }
+
+    @Bean
+    fun mailTemplateCreateor(mailTemplateRepository: MailTemplateRepository) = MailTemplateCreator(mailTemplateRepository)
 }
