@@ -30,6 +30,8 @@ class MailService(
     private val mailRepository: MailRepository,
     private val objectMapper: ObjectMapper,
     private val mailSpamService: MailSpamService,
+
+    private val postOfficeBuilderFactory: PostOfficeBuilderFactory,
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -329,16 +331,15 @@ class MailService(
             restTemplate = restTemplate,
         ).create()
 
-        val postOffice = PostOffice(
-            javaMailSender = javaMailSender,
-            getTitle = getTitle,
-            getHtmlTemplate = getHtmlTemplate,
-            getHtmlTemplateParameters = getHtmlTemplateParameters,
-            getFromAddress = getFromAddress,
-            getFromName = getFromName,
-            getToAddress = getToAddress,
-            getFileAttachmentDtoList = getFileAttachmentDtoList
-        )
+        val postOffice = postOfficeBuilderFactory.create()
+            .toAddress(sendMailDto.toAddress)
+            .fromName(sendMailDto.fromName)
+            .fromAddress(sendMailDto.fromAddress)
+            .title(sendMailDto.title)
+            .htmlTemplateName(sendMailDto.htmlTemplateName)
+            .htmlTemplateParameters(sendMailDto.htmlTemplateParameters)
+            .fileAttachments(sendMailDto.fileAttachments)
+            .build()
 
         try {
             val mimeMessage = postOffice.newMimeMessage()
@@ -412,36 +413,188 @@ class MailService(
 }
 
 @Component
+class PostOfficeBuilderFactory(
+    private val mailSpamService: MailSpamService,
+    private val mailTemplateRepository: MailTemplateRepository,
+    private val handlebars: Handlebars,
+    private val objectMapper: ObjectMapper,
+    private val restTemplate: RestTemplate,
+    private val javaMailSender: JavaMailSender,
+    ) {
+
+    fun create(): PostOfficeBuilder {
+        return PostOfficeBuilder(
+            mailSpamService = mailSpamService,
+            mailTemplateRepository = mailTemplateRepository,
+            handlebars = handlebars,
+            objectMapper = objectMapper,
+            restTemplate = restTemplate,
+            javaMailSender = javaMailSender,
+        )
+    }
+}
+
 class PostOfficeBuilder(
     private val mailSpamService: MailSpamService,
+    private val mailTemplateRepository: MailTemplateRepository,
+    private val handlebars: Handlebars,
+    private val objectMapper: ObjectMapper,
+    private val restTemplate: RestTemplate,
+    private val javaMailSender: JavaMailSender,
 ) {
     private var getToAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
     private var getFromAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
     private var getHtmlTemplateName: () -> String = { throw IllegalStateException("getToAddress is not set") }
+    private var getHtmlTemplate: () -> Template = { throw IllegalStateException("getHtmlTemplate is not set") }
+    private var getTitle: () -> String = { throw IllegalStateException("getTitle is not set") }
+    private var getFromName: () -> String = { throw IllegalStateException("getTitle is not set") }
+    private var getHtmlTemplateParameters: () -> MailService.HtmlTemplateParameters =
+        { throw IllegalStateException("getTitle is not set") }
+
+    private var getFileAttachmentDtoList: () -> List<MailService.FileAttachmentDto> = { throw IllegalStateException("getTitle is not set") }
+
 
     fun toAddress(toAddress: String): PostOfficeBuilder {
         getToAddress = when {
-            mailSpamService.needBlockByDomainName(toAddress) -> { throw RuntimeException("도메인 차단") }
-            mailSpamService.needBlockByRecentSuccess(toAddress) -> { throw RuntimeException("최근 메일 발송 실패로 인한 차단") }
-            Regex(".+@.*\\..+").matches(toAddress).not() -> { throw RuntimeException("이메일 형식 오류") }
-            else -> { { toAddress } }
+            mailSpamService.needBlockByDomainName(toAddress) -> {
+                { throw RuntimeException("도메인 차단") }
+            }
+
+            mailSpamService.needBlockByRecentSuccess(toAddress) -> {
+                { throw RuntimeException("최근 메일 발송 실패로 인한 차단") }
+            }
+
+            Regex(".+@.*\\..+").matches(toAddress).not() -> {
+                { throw RuntimeException("이메일 형식 오류") }
+            }
+
+            else -> {
+                { toAddress }
+            }
         }
         return this
     }
 
     fun fromAddress(fromAddress: String): PostOfficeBuilder {
-        this.getFromAddress = MailService.GetFromAddressFactory(
-            fromAddress = fromAddress,
-        ).create()
+        getFromAddress = when {
+            Regex(".+@.*\\..+").matches(fromAddress).not() -> {
+                { throw RuntimeException("이메일 형식 오류") }
+            }
 
+            else -> {
+                { fromAddress }
+            }
+        }
         return this
     }
 
     fun htmlTemplateName(htmlTemplateName: String): PostOfficeBuilder {
-        this.getHtmlTemplateName = MailService.GetHtmlTemplateNameFactory(
-            htmlTemplateName = htmlTemplateName,
-        ).create()
+        getHtmlTemplateName = when {
+            htmlTemplateName.isBlank() -> {
+                { throw RuntimeException("템플릿 이름이 비어있습니다") }
+            }
 
+            else -> {
+                { htmlTemplateName }
+            }
+        }
+
+        val htmlTemplate = mailTemplateRepository.findByName(htmlTemplateName)
+        getHtmlTemplate = when {
+            htmlTemplate == null -> {
+                { throw RuntimeException("템플릿이 존재하지 않습니다: [$htmlTemplateName]") }
+            }
+
+            else -> {
+                val template = handlebars.compileInline(htmlTemplate.htmlBody)
+                ({ template })
+            }
+        }
         return this
+    }
+
+
+    fun title(title: String): PostOfficeBuilder {
+        getTitle = when {
+            title.isBlank() -> {
+                { throw RuntimeException("제목이 비어있습니다") }
+            }
+
+            else -> {
+                { title }
+            }
+        }
+        return this
+    }
+
+
+    fun fromName(fromName: String): PostOfficeBuilder {
+        getFromName = when {
+            fromName.isBlank() -> {
+                { throw RuntimeException("이름이 비어있습니다") }
+            }
+
+            else -> {
+                { fromName }
+            }
+        }
+        return this
+    }
+
+    fun htmlTemplateParameters(htmlTemplateParameters: Map<String, Any>): PostOfficeBuilder {
+        getHtmlTemplateParameters = {
+            MailService.HtmlTemplateParameters(
+                holder = htmlTemplateParameters,
+                objectMapper = objectMapper,
+            )
+        }
+        return this
+    }
+
+    fun fileAttachments(fileAttachments: List<FileAttachment>): PostOfficeBuilder {
+        val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
+            val fileAttachmentDto = restTemplate.execute(
+                attachment.url,
+                HttpMethod.GET,
+                null,
+                { clientHttpResponse: ClientHttpResponse ->
+                    val id = "file-${index}-${java.util.UUID.randomUUID()}"
+                    val tempFile = File.createTempFile(id, "")
+                    StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
+
+                    MailService.FileAttachmentDto(
+                        resultFile = tempFile,
+                        name = attachment.name,
+                        clientHttpResponse = clientHttpResponse
+                    )
+                })
+
+            if (fileAttachmentDto == null) {
+                throw RuntimeException("파일 초기화 실패")
+            }
+            if (fileAttachmentDto.resultFile.length() != fileAttachmentDto.clientHttpResponse.headers.contentLength) {
+                throw RuntimeException("파일 크기 불일치")
+            }
+            if (DataSize.ofKilobytes(2048) <= DataSize.ofBytes(fileAttachmentDto.clientHttpResponse.headers.contentLength)) {
+                throw RuntimeException("파일 크기 초과")
+            }
+            fileAttachmentDto
+        }
+
+        getFileAttachmentDtoList = { fileAttachmentDtoList }
+        return this
+    }
+
+    fun build(): MailService.PostOffice {
+        return MailService.PostOffice(
+            javaMailSender = javaMailSender,
+            getTitle = getTitle,
+            getHtmlTemplate = getHtmlTemplate,
+            getHtmlTemplateParameters = getHtmlTemplateParameters,
+            getFromAddress = getFromAddress,
+            getFromName = getFromName,
+            getToAddress = getToAddress,
+            getFileAttachmentDtoList = getFileAttachmentDtoList
+        )
     }
 }
