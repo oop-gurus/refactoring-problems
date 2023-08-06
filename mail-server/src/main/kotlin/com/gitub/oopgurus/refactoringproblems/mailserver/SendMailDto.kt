@@ -4,7 +4,7 @@ data class SendMailDto(
     val title: String,
     val fromAddress: Address,
     val fromName: String,
-    val toAddress: Address,
+    val toAddress: DestinationAddress,
     val fileAttachments: List<FileAttachment>,
     val htmlTemplateName: String,
     val htmlTemplateParameters: Map<String, Any>,

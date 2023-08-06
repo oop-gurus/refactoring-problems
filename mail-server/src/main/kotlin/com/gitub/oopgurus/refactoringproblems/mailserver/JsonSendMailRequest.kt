@@ -14,7 +14,7 @@ data class JsonSendMailRequest(
         title = title,
         fromAddress = Address(fromAddress),
         fromName = fromName,
-        toAddress = Address(toAddress),
+        toAddress = DestinationAddress(toAddress),
         fileAttachments = fileAttachments,
         htmlTemplateName = htmlTemplateName,
         htmlTemplateParameters = htmlTemplateParameters,

@@ -54,16 +54,12 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        mailSpamService.needBlockByDomainName(sendMailDto.toAddress.value).let {
-            if (it) {
-                throw RuntimeException("도메인 차단")
-            }
-        }
         mailSpamService.needBlockByRecentSuccess(sendMailDto.toAddress.value).let {
             if (it) {
                 throw RuntimeException("최근 메일 발송 실패로 인한 차단")
             }
         }
+
         if (sendMailDto.title.isBlank()) {
             throw RuntimeException("제목이 비어있습니다")
         }

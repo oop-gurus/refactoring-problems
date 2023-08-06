@@ -1,6 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.mailserver
 
-data class Address(
+open class Address(
         val value: String,
 ) {
     init {
