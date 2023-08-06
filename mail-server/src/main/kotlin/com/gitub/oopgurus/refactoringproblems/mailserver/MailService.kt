@@ -72,9 +72,7 @@ class MailService(
     private fun sendSingle(sendMailDto: SendMailDto) {
         raiseIfBadRequest(sendMailDto)
 
-        val htmlTemplate = mailTemplateRepository.findByName(sendMailDto.htmlTemplateName)
-            ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${sendMailDto.htmlTemplateName}]")
-        val template: Template = handlebars.compileInline(htmlTemplate.htmlBody)
+        val template = findMailTemplate(sendMailDto.htmlTemplateName)
         val html = template.apply(sendMailDto.htmlTemplateParameters)
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
@@ -225,6 +223,13 @@ class MailService(
                 throw RuntimeException("최근 메일 발송 실패로 인한 차단")
             }
         }
+    }
+
+    private fun findMailTemplate(templateName: String): Template {
+        val htmlTemplate = mailTemplateRepository.findByName(templateName)
+            ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${templateName}]")
+
+        return handlebars.compileInline(htmlTemplate.htmlBody)
     }
 
     fun creatMailTemplate(createMailTemplateDtos: List<CreateMailTemplateDto>) {
