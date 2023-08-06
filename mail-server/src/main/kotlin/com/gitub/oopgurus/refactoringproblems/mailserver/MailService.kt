@@ -70,35 +70,7 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        mailSpamService.needBlockByDomainName(sendMailDto.toAddress).let {
-            if (it) {
-                throw RuntimeException("도메인 차단")
-            }
-        }
-        mailSpamService.needBlockByRecentSuccess(sendMailDto.toAddress).let {
-            if (it) {
-                throw RuntimeException("최근 메일 발송 실패로 인한 차단")
-            }
-        }
-        Regex(".+@.*\\..+").matches(sendMailDto.toAddress).let {
-            if (it.not()) {
-                throw RuntimeException("이메일 형식 오류")
-            }
-        }
-        Regex(".+@.*\\..+").matches(sendMailDto.fromAddress).let {
-            if (it.not()) {
-                throw RuntimeException("이메일 형식 오류")
-            }
-        }
-        if (sendMailDto.title.isBlank()) {
-            throw RuntimeException("제목이 비어있습니다")
-        }
-        if (sendMailDto.htmlTemplateName.isBlank()) {
-            throw RuntimeException("템플릿 이름이 비어있습니다")
-        }
-        if (sendMailDto.fromName.isBlank()) {
-            throw RuntimeException("발신자 이름이 비어있습니다")
-        }
+        raiseIfBadRequest(sendMailDto)
 
         val htmlTemplate = mailTemplateRepository.findByName(sendMailDto.htmlTemplateName)
             ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${sendMailDto.htmlTemplateName}]")
@@ -216,6 +188,42 @@ class MailService(
                 )
             )
             log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
+        }
+    }
+
+    private fun raiseIfBadRequest(sendMailDto: SendMailDto) {
+        /** 사용자 Request 검증 -> Bad Request */
+        Regex(".+@.*\\..+").matches(sendMailDto.toAddress).let {
+            if (it.not()) {
+                throw RuntimeException("이메일 형식 오류")
+            }
+        }
+        Regex(".+@.*\\..+").matches(sendMailDto.fromAddress).let {
+            if (it.not()) {
+                throw RuntimeException("이메일 형식 오류")
+            }
+        }
+        if (sendMailDto.title.isBlank()) {
+            throw RuntimeException("제목이 비어있습니다")
+        }
+        if (sendMailDto.htmlTemplateName.isBlank()) {
+            throw RuntimeException("템플릿 이름이 비어있습니다")
+        }
+        if (sendMailDto.fromName.isBlank()) {
+            throw RuntimeException("발신자 이름이 비어있습니다")
+        }
+
+
+        /** 메일 차단 - 비지니스 영역 */
+        mailSpamService.needBlockByDomainName(sendMailDto.toAddress).let {
+            if (it) {
+                throw RuntimeException("도메인 차단")
+            }
+        }
+        mailSpamService.needBlockByRecentSuccess(sendMailDto.toAddress).let {
+            if (it) {
+                throw RuntimeException("최근 메일 발송 실패로 인한 차단")
+            }
         }
     }
 
