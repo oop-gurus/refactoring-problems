@@ -19,6 +19,7 @@ import org.springframework.util.unit.DataSize
 import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.FileOutputStream
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -57,11 +58,6 @@ class MailService(
     // 예약 메일 기능
     //   - 일단 등록하고 나중에 발송 (성공 실패를 어떻게 알지?)
 
-    data class FileAttachmentDto(
-        val resultFile: File,
-        val name: String,
-        val clientHttpResponse: ClientHttpResponse,
-    )
 
     fun send(sendMailDtos: List<SendMailDto>) {
         sendMailDtos.forEach {
@@ -82,60 +78,14 @@ class MailService(
             mimeMessageHelper.setFrom(InternetAddress(sendMailDto.fromAddress, sendMailDto.fromName, "UTF-8"))
             mimeMessageHelper.setTo(sendMailDto.toAddress)
 
-            val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
-                val result = restTemplate.execute(
-                    attachment.url,
-                    HttpMethod.GET,
-                    null,
-                    { clientHttpResponse: ClientHttpResponse ->
-                        val id = "file-${index}-${java.util.UUID.randomUUID()}"
-                        val tempFile = File.createTempFile(id, "")
-                        StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
-
-                        FileAttachmentDto(
-                            resultFile = tempFile,
-                            name = attachment.name,
-                            clientHttpResponse = clientHttpResponse
-                        )
-                    })
-
-                if (result == null) {
-                    throw RuntimeException("파일 초기화 실패")
-                }
-                if (result.resultFile.length() != result.clientHttpResponse.headers.contentLength) {
-                    throw RuntimeException("파일 크기 불일치")
-                }
-                if (DataSize.ofKilobytes(2048) <= DataSize.ofBytes(result.clientHttpResponse.headers.contentLength)) {
-                    throw RuntimeException("파일 크기 초과")
-                }
-                result
-            }
-            fileResults.forEach {
-                val fileSystemResource: FileSystemResource = FileSystemResource(File(it.resultFile.absolutePath))
-                mimeMessageHelper.addAttachment(
-                    MimeUtility.encodeText(
-                        it.name,
-                        "UTF-8",
-                        "B"
-                    ), fileSystemResource
-                )
-            }
-
-            var postfixTitle = ""
-            if (fileResults.isNotEmpty()) {
-                val totalSize = fileResults
-                    .map { it.clientHttpResponse.headers.contentLength }
-                    .reduceOrNull { acc, size -> acc + size } ?: 0
-                postfixTitle = " (첨부파일 [${fileResults.size}]개, 전체크기 [$totalSize bytes])"
-            }
+            val postfixTitleByAttachmentFile = attachmentFile(sendMailDto.fileAttachments, mimeMessageHelper)
             mimeMessageHelper.setSubject(
                 MimeUtility.encodeText(
-                    sendMailDto.title + postfixTitle,
+                    sendMailDto.title + postfixTitleByAttachmentFile,
                     "UTF-8",
                     "B"
                 )
             ) // Base64 encoding
-
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
@@ -187,6 +137,65 @@ class MailService(
             )
             log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
         }
+    }
+
+    private fun attachmentFile(
+        fileAttachments: List<FileAttachment>,
+        mimeMessageHelper: MimeMessageHelper
+    ): String? {
+
+        data class FileAttachmentDto(
+            val resultFile: File,
+            val name: String,
+            val clientHttpResponse: ClientHttpResponse,
+        )
+
+        val fileResults = fileAttachments.mapIndexed { index, attachment ->
+            val result = restTemplate.execute(
+                attachment.url,
+                HttpMethod.GET,
+                null,
+                { clientHttpResponse: ClientHttpResponse ->
+                    val id = "file-${index}-${UUID.randomUUID()}"
+                    val tempFile = File.createTempFile(id, "")
+                    StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
+
+                    FileAttachmentDto(
+                        resultFile = tempFile,
+                        name = attachment.name,
+                        clientHttpResponse = clientHttpResponse
+                    )
+                })
+
+            if (result == null) {
+                throw RuntimeException("파일 초기화 실패")
+            }
+            if (result.resultFile.length() != result.clientHttpResponse.headers.contentLength) {
+                throw RuntimeException("파일 크기 불일치")
+            }
+            if (DataSize.ofKilobytes(2048) <= DataSize.ofBytes(result.clientHttpResponse.headers.contentLength)) {
+                throw RuntimeException("파일 크기 초과")
+            }
+            result
+        }
+
+        fileResults.forEach {
+            val fileSystemResource: FileSystemResource = FileSystemResource(File(it.resultFile.absolutePath))
+            mimeMessageHelper.addAttachment(
+                MimeUtility.encodeText(
+                    it.name,
+                    "UTF-8",
+                    "B"
+                ), fileSystemResource
+            )
+        }
+
+        return if (fileResults.isNotEmpty()) {
+            val totalSize = fileResults
+                .map { it.clientHttpResponse.headers.contentLength }
+                .reduceOrNull { acc, size -> acc + size } ?: 0
+            " (첨부파일 [${fileResults.size}]개, 전체크기 [$totalSize bytes])"
+        } else null
     }
 
     private fun raiseIfBadRequest(sendMailDto: SendMailDto) {
