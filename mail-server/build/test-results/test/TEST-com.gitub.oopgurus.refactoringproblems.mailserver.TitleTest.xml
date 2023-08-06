@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.gitub.oopgurus.refactoringproblems.mailserver.TitleTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-08-06T10:42:50" hostname="oseungjaeui-MacBookAir.local" time="0.004">
+  <properties/>
+  <testcase name="blank_title()" classname="com.gitub.oopgurus.refactoringproblems.mailserver.TitleTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

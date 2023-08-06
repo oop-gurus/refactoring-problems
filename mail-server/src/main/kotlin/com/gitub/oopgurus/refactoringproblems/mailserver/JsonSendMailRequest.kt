@@ -11,12 +11,12 @@ data class JsonSendMailRequest(
     val sendAfterSeconds: Long?
 ) {
     fun toSendMailDto() = SendMailDto(
-        title = title,
+        title = Title(title),
         fromAddress = Address(fromAddress),
-        fromName = fromName,
+        fromName = SenderName(fromName),
         toAddress = DestinationAddress(toAddress),
         fileAttachments = fileAttachments,
-        htmlTemplateName = htmlTemplateName,
+        htmlTemplateName = HtmlTemplateName(htmlTemplateName),
         htmlTemplateParameters = htmlTemplateParameters,
         sendAfterSeconds = sendAfterSeconds
     )
