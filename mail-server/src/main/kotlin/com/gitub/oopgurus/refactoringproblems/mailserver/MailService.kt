@@ -25,39 +25,13 @@ import java.util.concurrent.TimeUnit
 @Component
 class MailService(
     private val javaMailSender: JavaMailSender,
-    private val restTemplate: RestTemplate,
     private val mailTemplateRepository: MailTemplateRepository,
     private val mailRepository: MailRepository,
-    private val objectMapper: ObjectMapper,
-    private val mailSpamService: MailSpamService,
-
     private val postOfficeBuilderFactory: PostOfficeBuilderFactory,
 ) {
 
     private val log = KotlinLogging.logger {}
-    private val handlebars = Handlebars().also {
-        it.registerHelperMissing(Helper<Any> { context, options ->
-            throw IllegalArgumentException("누락된 파라메터 발생: [${options.helperName}]")
-        })
-    }
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
-
-
-    // 객체를 일단 만들면 뭐든 할 수 있다
-    //   - 메일 발송 실패할 수도 있는거 아님? -> 이건 예외가 아니라 비즈니스 실패이므로 객체생성 ok
-    // from validation
-    // to validation
-    // 의존성 없이 validation 가능한거
-    //   - 이메일 형식
-    // http or db or 라이브러리 등 의존성이 필요한거
-    //   - 수신거부 메일 도메인 목록
-    //   - 메일 과금 회원 정보
-    //   - 템플릿 변수 확인
-    // 복잡한 로직이 있는 의존성이 필요한거
-    //   - 메일 과금 정책 -> 현재 메일 크레딧이 얼마나 남아있는지 확인
-    //   - 메일 API 초당 호출 횟수 제한
-    // 예약 메일 기능
-    //   - 일단 등록하고 나중에 발송 (성공 실패를 어떻게 알지?)
 
     data class FileAttachmentDto(
         val resultFile: File,
@@ -68,106 +42,6 @@ class MailService(
     fun send(sendMailDtos: List<SendMailDto>) {
         sendMailDtos.forEach {
             sendSingle(it)
-        }
-    }
-
-    class GetToAddressFactory(
-        private val mailSpamService: MailSpamService,
-        private val toAddress: String,
-    ) {
-        fun create(): () -> String {
-            mailSpamService.needBlockByDomainName(toAddress).let {
-                if (it) {
-                    return { throw RuntimeException("도메인 차단") }
-                }
-            }
-            mailSpamService.needBlockByRecentSuccess(toAddress).let {
-                if (it) {
-                    return { throw RuntimeException("최근 메일 발송 실패로 인한 차단") }
-                }
-            }
-            Regex(".+@.*\\..+").matches(toAddress).let {
-                if (it.not()) {
-                    return { throw RuntimeException("이메일 형식 오류") }
-                }
-            }
-            return { toAddress }
-        }
-    }
-
-    class GetFromAddressFactory(
-        private val fromAddress: String,
-    ) {
-        fun create(): () -> String {
-            Regex(".+@.*\\..+").matches(fromAddress).let {
-                if (it.not()) {
-                    return { throw RuntimeException("이메일 형식 오류") }
-                }
-            }
-            return { fromAddress }
-        }
-    }
-
-    class GetHtmlTemplateFactory(
-        private val mailTemplateRepository: MailTemplateRepository,
-        private val handlebars: Handlebars,
-        private val getHtmlTemplateName: () -> String,
-    ) {
-        fun create(): () -> Template {
-            val htmlTemplateName = getHtmlTemplateName()
-            val htmlTemplate = mailTemplateRepository.findByName(htmlTemplateName)
-            if (htmlTemplate == null) {
-                return { throw RuntimeException("템플릿이 존재하지 않습니다: [$htmlTemplateName]") }
-            }
-            val template = handlebars.compileInline(htmlTemplate.htmlBody)
-            return { template }
-        }
-    }
-
-    class GetTitleFactory(
-        private val title: String,
-    ) {
-        fun create(): () -> String {
-            if (title.isBlank()) {
-                return { throw RuntimeException("제목이 비어있습니다") }
-            }
-            return { title }
-        }
-    }
-
-    class GetFromNameFactory(
-        private val fromName: String,
-    ) {
-        fun create(): () -> String {
-            if (fromName.isBlank()) {
-                return { throw RuntimeException("이름이 비어있습니다") }
-            }
-            return { fromName }
-        }
-    }
-
-    class GetHtmlTemplateNameFactory(
-        private val htmlTemplateName: String,
-    ) {
-        fun create(): () -> String {
-            if (htmlTemplateName.isBlank()) {
-                return { throw RuntimeException("템플릿 이름이 비어있습니다") }
-            }
-            return { htmlTemplateName }
-        }
-    }
-
-    class GetHtmlTemplateParametersFactory(
-        private val htmlTemplateParameters: Map<String, Any>,
-        private val objectMapper: ObjectMapper,
-    ) {
-        fun create(): () -> HtmlTemplateParameters {
-            return {
-                HtmlTemplateParameters(
-                    holder = htmlTemplateParameters,
-                    objectMapper = objectMapper,
-                )
-            }
         }
     }
 
@@ -184,56 +58,18 @@ class MailService(
         }
     }
 
-    class GetFileAttachmentDtoListFactory(
-        private val restTemplate: RestTemplate,
-        private val fileAttachments: List<FileAttachment>,
-    ) {
-        fun create(): () -> List<FileAttachmentDto> {
-            val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
-                val fileAttachmentDto = restTemplate.execute(
-                    attachment.url,
-                    HttpMethod.GET,
-                    null,
-                    { clientHttpResponse: ClientHttpResponse ->
-                        val id = "file-${index}-${java.util.UUID.randomUUID()}"
-                        val tempFile = File.createTempFile(id, "")
-                        StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
-
-                        FileAttachmentDto(
-                            resultFile = tempFile,
-                            name = attachment.name,
-                            clientHttpResponse = clientHttpResponse
-                        )
-                    })
-
-                if (fileAttachmentDto == null) {
-                    throw RuntimeException("파일 초기화 실패")
-                }
-                if (fileAttachmentDto.resultFile.length() != fileAttachmentDto.clientHttpResponse.headers.contentLength) {
-                    throw RuntimeException("파일 크기 불일치")
-                }
-                if (DataSize.ofKilobytes(2048) <= DataSize.ofBytes(fileAttachmentDto.clientHttpResponse.headers.contentLength)) {
-                    throw RuntimeException("파일 크기 초과")
-                }
-
-                fileAttachmentDto
-            }
-
-            return { fileAttachmentDtoList }
-        }
-    }
-
     class PostOffice(
         private val javaMailSender: JavaMailSender,
         private val getTitle: () -> String,
         private val getHtmlTemplate: () -> Template,
+        private val getHtmlTemplateName: () -> String,
         private val getHtmlTemplateParameters: () -> HtmlTemplateParameters,
         private val getFromAddress: () -> String,
         private val getFromName: () -> String,
         private val getToAddress: () -> String,
         private val getFileAttachmentDtoList: () -> List<FileAttachmentDto>,
     ) {
-        fun newMimeMessage(): MimeMessage {
+        fun newMailMessage(): MailMessage {
             val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
 
@@ -243,7 +79,15 @@ class MailService(
             addFromAddressTo(mimeMessageHelper)
             addTextTo(mimeMessageHelper)
 
-            return mimeMessage
+            return MailMessage(
+                mimeMessage = mimeMessage,
+                htmlTemplateName = getHtmlTemplateName(),
+                htmlTemplateParameters = getHtmlTemplateParameters(),
+                title = getTitle(),
+                fromAddress = getFromAddress(),
+                fromName = getFromName(),
+                toAddress = getToAddress(),
+            )
         }
 
         private fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
@@ -294,43 +138,6 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        val getToAddress = GetToAddressFactory(
-            mailSpamService = mailSpamService,
-            toAddress = sendMailDto.toAddress,
-        ).create()
-
-        val getFromAddress = GetFromAddressFactory(
-            fromAddress = sendMailDto.fromAddress,
-        ).create()
-
-        val getHtmlTemplateName = GetHtmlTemplateNameFactory(
-            htmlTemplateName = sendMailDto.htmlTemplateName,
-        ).create()
-
-        val getHtmlTemplate = GetHtmlTemplateFactory(
-            mailTemplateRepository = mailTemplateRepository,
-            handlebars = handlebars,
-            getHtmlTemplateName = getHtmlTemplateName,
-        ).create()
-
-        val getTitle = GetTitleFactory(
-            title = sendMailDto.title,
-        ).create()
-
-        val getFromName = GetFromNameFactory(
-            fromName = sendMailDto.fromName,
-        ).create()
-
-        val getHtmlTemplateParameters = GetHtmlTemplateParametersFactory(
-            htmlTemplateParameters = sendMailDto.htmlTemplateParameters,
-            objectMapper = objectMapper,
-        ).create()
-
-        val getFileAttachmentDtoList = GetFileAttachmentDtoListFactory(
-            fileAttachments = sendMailDto.fileAttachments,
-            restTemplate = restTemplate,
-        ).create()
-
         val postOffice = postOfficeBuilderFactory.create()
             .toAddress(sendMailDto.toAddress)
             .fromName(sendMailDto.fromName)
@@ -341,21 +148,20 @@ class MailService(
             .fileAttachments(sendMailDto.fileAttachments)
             .build()
 
+        val mailMessage = postOffice.newMailMessage()
         try {
-            val mimeMessage = postOffice.newMimeMessage()
-
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
                     {
-                        javaMailSender.send(mimeMessage)
+                        javaMailSender.send(mailMessage.mimeMessage())
                         mailRepository.save(
                             MailEntity(
-                                fromAddress = getFromAddress(),
-                                fromName = getFromName(),
-                                toAddress = getToAddress(),
-                                title = getTitle(),
-                                htmlTemplateName = getHtmlTemplateName(),
-                                htmlTemplateParameters = getHtmlTemplateParameters().asJson(),
+                                fromAddress = mailMessage.fromAddress(),
+                                fromName = mailMessage.fromName(),
+                                toAddress = mailMessage.toAddress(),
+                                title = mailMessage.title(),
+                                htmlTemplateName = mailMessage.htmlTemplateName(),
+                                htmlTemplateParameters = mailMessage.htmlTemplateParameters().asJson(),
                                 isSuccess = true,
                             )
                         )
@@ -366,16 +172,15 @@ class MailService(
                 )
 
             } else {
-
-                javaMailSender.send(mimeMessage)
+                javaMailSender.send(mailMessage.mimeMessage())
                 mailRepository.save(
                     MailEntity(
-                        fromAddress = getFromAddress(),
-                        fromName = getFromName(),
-                        toAddress = getToAddress(),
-                        title = getTitle(),
-                        htmlTemplateName = getHtmlTemplateName(),
-                        htmlTemplateParameters = getHtmlTemplateParameters().asJson(),
+                        fromAddress = mailMessage.fromAddress(),
+                        fromName = mailMessage.fromName(),
+                        toAddress = mailMessage.toAddress(),
+                        title = mailMessage.title(),
+                        htmlTemplateName = mailMessage.htmlTemplateName(),
+                        htmlTemplateParameters = mailMessage.htmlTemplateParameters().asJson(),
                         isSuccess = true,
                     )
                 )
@@ -384,12 +189,12 @@ class MailService(
         } catch (e: Exception) {
             mailRepository.save(
                 MailEntity(
-                    fromAddress = getFromAddress(),
-                    fromName = getFromName(),
-                    toAddress = getToAddress(),
-                    title = getTitle(),
-                    htmlTemplateName = getHtmlTemplateName(),
-                    htmlTemplateParameters = getHtmlTemplateParameters().asJson(),
+                    fromAddress = mailMessage.fromAddress(),
+                    fromName = mailMessage.fromName(),
+                    toAddress = mailMessage.toAddress(),
+                    title = mailMessage.title(),
+                    htmlTemplateName = mailMessage.htmlTemplateName(),
+                    htmlTemplateParameters = mailMessage.htmlTemplateParameters().asJson(),
                     isSuccess = false,
                 )
             )
@@ -590,11 +395,50 @@ class PostOfficeBuilder(
             javaMailSender = javaMailSender,
             getTitle = getTitle,
             getHtmlTemplate = getHtmlTemplate,
+            getHtmlTemplateName = getHtmlTemplateName,
             getHtmlTemplateParameters = getHtmlTemplateParameters,
             getFromAddress = getFromAddress,
             getFromName = getFromName,
             getToAddress = getToAddress,
             getFileAttachmentDtoList = getFileAttachmentDtoList
         )
+    }
+}
+
+class MailMessage(
+    private val mimeMessage: MimeMessage,
+    private val htmlTemplateName: String,
+    private val htmlTemplateParameters: MailService.HtmlTemplateParameters,
+    private val title: String,
+    private val fromAddress: String,
+    private val fromName: String,
+    private val toAddress: String,
+) {
+    fun mimeMessage(): MimeMessage {
+        return mimeMessage
+    }
+
+    fun fromAddress(): String {
+        return fromAddress
+    }
+
+    fun fromName(): String {
+        return fromName
+    }
+
+    fun toAddress(): String {
+        return toAddress
+    }
+
+    fun title(): String {
+        return title
+    }
+
+    fun htmlTemplateName(): String {
+        return htmlTemplateName
+    }
+
+    fun htmlTemplateParameters(): MailService.HtmlTemplateParameters {
+        return htmlTemplateParameters
     }
 }
