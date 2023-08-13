@@ -5,6 +5,8 @@ import com.github.jknack.handlebars.Handlebars
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 
 @Component
 class PostOfficeBuilderFactory(
@@ -14,7 +16,10 @@ class PostOfficeBuilderFactory(
     private val objectMapper: ObjectMapper,
     private val restTemplate: RestTemplate,
     private val javaMailSender: JavaMailSender,
-    ) {
+    private val mailRepository: MailRepository,
+
+) {
+    private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
     fun create(): PostOfficeBuilder {
         return PostOfficeBuilder(
@@ -24,6 +29,8 @@ class PostOfficeBuilderFactory(
             objectMapper = objectMapper,
             restTemplate = restTemplate,
             javaMailSender = javaMailSender,
+            mailRepository = mailRepository,
+            scheduledExecutorService = scheduledExecutorService,
         )
     }
 }

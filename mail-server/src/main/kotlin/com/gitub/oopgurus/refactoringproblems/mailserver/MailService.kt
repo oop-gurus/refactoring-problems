@@ -9,15 +9,9 @@ import java.util.concurrent.TimeUnit
 
 @Component
 class MailService(
-    private val javaMailSender: JavaMailSender,
     private val mailTemplateRepository: MailTemplateRepository,
-    private val mailRepository: MailRepository,
     private val postOfficeBuilderFactory: PostOfficeBuilderFactory,
 ) {
-
-    private val log = KotlinLogging.logger {}
-    private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
-
     fun send(sendMailDtos: List<SendMailDto>) {
         sendMailDtos.forEach {
             sendSingle(it)
@@ -33,6 +27,7 @@ class MailService(
             .htmlTemplateName(sendMailDto.htmlTemplateName)
             .htmlTemplateParameters(sendMailDto.htmlTemplateParameters)
             .fileAttachments(sendMailDto.fileAttachments)
+            .sendAfterSeconds(sendMailDto.sendAfterSeconds)
             .build()
 
         val mailMessage = postOffice.newMailMessage()
@@ -62,58 +57,6 @@ class MailService(
 
         // 동작2(결과를 저장한다)는 동작1(메일을 보낸다)에 의존적이므로 다음과 같이 표현
         mailMessage.send().register()
-
-        try {
-            if (sendMailDto.sendAfterSeconds != null) {
-                scheduledExecutorService.schedule(
-                    {
-                        javaMailSender.send(mailMessage.mimeMessage())
-                        mailRepository.save(
-                            MailEntity(
-                                fromAddress = mailMessage.fromAddress(),
-                                fromName = mailMessage.fromName(),
-                                toAddress = mailMessage.toAddress(),
-                                title = mailMessage.title(),
-                                htmlTemplateName = mailMessage.htmlTemplateName(),
-                                htmlTemplateParameters = mailMessage.htmlTemplateParameters().asJson(),
-                                isSuccess = true,
-                            )
-                        )
-                        log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-                    },
-                    sendMailDto.sendAfterSeconds,
-                    TimeUnit.SECONDS
-                )
-
-            } else {
-                javaMailSender.send(mailMessage.mimeMessage())
-                mailRepository.save(
-                    MailEntity(
-                        fromAddress = mailMessage.fromAddress(),
-                        fromName = mailMessage.fromName(),
-                        toAddress = mailMessage.toAddress(),
-                        title = mailMessage.title(),
-                        htmlTemplateName = mailMessage.htmlTemplateName(),
-                        htmlTemplateParameters = mailMessage.htmlTemplateParameters().asJson(),
-                        isSuccess = true,
-                    )
-                )
-                log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-            }
-        } catch (e: Exception) {
-            mailRepository.save(
-                MailEntity(
-                    fromAddress = mailMessage.fromAddress(),
-                    fromName = mailMessage.fromName(),
-                    toAddress = mailMessage.toAddress(),
-                    title = mailMessage.title(),
-                    htmlTemplateName = mailMessage.htmlTemplateName(),
-                    htmlTemplateParameters = mailMessage.htmlTemplateParameters().asJson(),
-                    isSuccess = false,
-                )
-            )
-            log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
-        }
     }
 
     fun creatMailTemplate(createMailTemplateDtos: List<CreateMailTemplateDto>) {

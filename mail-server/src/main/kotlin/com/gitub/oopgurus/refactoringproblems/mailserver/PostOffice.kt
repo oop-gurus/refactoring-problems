@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage
 import jakarta.mail.internet.MimeUtility
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
+import java.util.concurrent.ScheduledExecutorService
 
 class PostOffice(
     private val javaMailSender: JavaMailSender,
@@ -17,6 +18,10 @@ class PostOffice(
     private val getFromName: () -> String,
     private val getToAddress: () -> String,
     private val getFileAttachmentDtoList: () -> List<FileAttachmentDto>,
+    private val getSendAfterSeconds: () -> Long?,
+    private val mailRepository: MailRepository,
+    private val scheduledExecutorService: ScheduledExecutorService,
+
 ) {
     fun newMailMessage(): MailMessage {
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
@@ -36,6 +41,10 @@ class PostOffice(
             fromAddress = getFromAddress(),
             fromName = getFromName(),
             toAddress = getToAddress(),
+            sendAfterSeconds = getSendAfterSeconds(),
+            javaMailSender = javaMailSender,
+            mailRepository = mailRepository,
+            scheduledExecutorService = scheduledExecutorService,
         )
     }
 
