@@ -62,6 +62,7 @@ class MailService(
 
         // 동작2(결과를 저장한다)는 동작1(메일을 보낸다)에 의존적이므로 다음과 같이 표현
         mailMessage.send().register()
+
         try {
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(

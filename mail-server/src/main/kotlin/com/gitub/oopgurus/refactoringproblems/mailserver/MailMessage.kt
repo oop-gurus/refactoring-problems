@@ -38,4 +38,8 @@ class MailMessage(
     fun htmlTemplateParameters(): HtmlTemplateParameters {
         return htmlTemplateParameters
     }
+
+    fun send(): MailSendResult {
+        TODO("Not yet implemented")
+    }
 }
