@@ -20,7 +20,7 @@ class SpringJavaMailMessage(
 
     override fun send(): MailSendResult {
         try {
-            sendNow()
+            javaMailSender.send(mimeMessage)
             saveSuccess()
             log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
         } catch (e: Exception) {
@@ -56,9 +56,5 @@ class SpringJavaMailMessage(
                 isSuccess = true,
             )
         )
-    }
-
-    private fun sendNow() {
-        javaMailSender.send(mimeMessage)
     }
 }
