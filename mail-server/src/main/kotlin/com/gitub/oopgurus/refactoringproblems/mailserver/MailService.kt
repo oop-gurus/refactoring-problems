@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 @Component
 class MailService(
     private val mailTemplateRepository: MailTemplateRepository,
-    private val postOfficeBuilderFactory: PostOfficeBuilderFactory,
+    private val mailMessageBuilderFactory: MailMessageBuilderFactory,
 ) {
     fun send(sendMailDtos: List<SendMailDto>) {
         sendMailDtos.forEach {
@@ -15,7 +15,7 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        val mailMessage = postOfficeBuilderFactory.create()
+        val mailMessage = mailMessageBuilderFactory.create()
             .toAddress(sendMailDto.toAddress)
             .fromName(sendMailDto.fromName)
             .fromAddress(sendMailDto.fromAddress)
@@ -44,4 +44,5 @@ class MailService(
         }
     }
 }
+
 
