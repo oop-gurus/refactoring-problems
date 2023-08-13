@@ -20,8 +20,8 @@ class PostOfficeBuilderFactory(
     ) {
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
-    fun create(): PostOfficeBuilder {
-        return PostOfficeBuilder(
+    fun create(): MailMessageBuilder {
+        return MailMessageBuilder(
             mailSpamService = mailSpamService,
             mailTemplateRepository = mailTemplateRepository,
             handlebars = handlebars,
