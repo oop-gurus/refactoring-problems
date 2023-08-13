@@ -12,31 +12,34 @@ class MailController(
     private val mailService: MailService,
     private val mailMessageBuilderFactory: MailMessageBuilderFactory,
 ) {
+
     @PostMapping(
         path = ["/v1/mails"],
         consumes = ["application/json"],
         produces = ["application/json"]
     )
     fun sendMail(@RequestBody sendMailDtoList: List<SendMailDto>): ResponseEntity<Any> {
-        val mailMessageList = sendMailDtoList.map { sendMailDto ->
-            mailMessageBuilderFactory.create()
-                .toAddress(sendMailDto.toAddress)
-                .fromName(sendMailDto.fromName)
-                .fromAddress(sendMailDto.fromAddress)
-                .title(sendMailDto.title)
-                .htmlTemplateName(sendMailDto.htmlTemplateName)
-                .htmlTemplateParameters(sendMailDto.htmlTemplateParameters)
-                .fileAttachments(sendMailDto.fileAttachments)
-                .sendAfterSeconds(sendMailDto.sendAfterSeconds)
-                .build()
-        }
+        val mailMessage = mailMessageBuilderFactory.bulk()
+            .singleBuilder { singleBuilder(it) }
+            .buildWith(sendMailDtoList)
 
-        mailMessageList.forEach { mailMessage ->
-            mailMessage.send()
-                .register()
-        }
+        mailMessage.send()
+            .register()
+
         return ResponseEntity.ok().build()
     }
+
+    private fun singleBuilder(it: SendMailDto) =
+        mailMessageBuilderFactory.single()
+            .toAddress(it.toAddress)
+            .fromName(it.fromName)
+            .fromAddress(it.fromAddress)
+            .title(it.title)
+            .htmlTemplateName(it.htmlTemplateName)
+            .htmlTemplateParameters(it.htmlTemplateParameters)
+            .fileAttachments(it.fileAttachments)
+            .sendAfterSeconds(it.sendAfterSeconds)
+            .build()
 
 
     @PostMapping(
