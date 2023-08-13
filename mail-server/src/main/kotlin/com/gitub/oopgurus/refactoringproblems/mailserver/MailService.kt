@@ -15,7 +15,7 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        val postOffice = postOfficeBuilderFactory.create()
+        val mailMessage = postOfficeBuilderFactory.create()
             .toAddress(sendMailDto.toAddress)
             .fromName(sendMailDto.fromName)
             .fromAddress(sendMailDto.fromAddress)
@@ -26,8 +26,7 @@ class MailService(
             .sendAfterSeconds(sendMailDto.sendAfterSeconds)
             .build()
 
-        postOffice.newMailMessage()
-            .send()
+        mailMessage.send()
             .register()
     }
 

@@ -6,7 +6,6 @@ import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
 
 @Component
 class PostOfficeBuilderFactory(
@@ -18,7 +17,7 @@ class PostOfficeBuilderFactory(
     private val javaMailSender: JavaMailSender,
     private val mailRepository: MailRepository,
 
-) {
+    ) {
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
     fun create(): PostOfficeBuilder {

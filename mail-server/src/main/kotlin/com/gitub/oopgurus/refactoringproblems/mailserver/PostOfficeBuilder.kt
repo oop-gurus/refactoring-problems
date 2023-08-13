@@ -191,15 +191,19 @@ class PostOfficeBuilder(
         return this
     }
 
-    fun build(): PostOffice {
-        return PostOffice(
+    fun build(): MailMessage {
+        val springJava = SpringJavaMailMessage(
             javaMailSender = javaMailSender,
-            getSendAfter = getSendAfter,
             mailRepository = mailRepository,
-            scheduledExecutorService = scheduledExecutorService,
             mimeMessage = newMimeMessage(),
             mailEntityGet = newMailEntityGet(),
         )
+        val scheduled = ScheduledMailMessage(
+            mailMessage = springJava,
+            scheduledExecutorService = scheduledExecutorService,
+            sendAfter = getSendAfter(),
+        )
+        return scheduled
     }
 
     private fun newMimeMessage(): MimeMessage {
