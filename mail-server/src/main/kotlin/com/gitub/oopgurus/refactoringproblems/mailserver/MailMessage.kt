@@ -56,18 +56,8 @@ class MailMessage(
             if (sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
                     {
-                        javaMailSender.send(mimeMessage())
-                        mailRepository.save(
-                            MailEntity(
-                                fromAddress = fromAddress(),
-                                fromName = fromName(),
-                                toAddress = toAddress(),
-                                title = title(),
-                                htmlTemplateName = htmlTemplateName(),
-                                htmlTemplateParameters = htmlTemplateParameters().asJson(),
-                                isSuccess = true,
-                            )
-                        )
+                        sendNow()
+                        saveSuccess()
                         log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
                     },
                     sendAfterSeconds,
@@ -75,35 +65,47 @@ class MailMessage(
                 )
 
             } else {
-                javaMailSender.send(mimeMessage())
-                mailRepository.save(
-                    MailEntity(
-                        fromAddress = fromAddress(),
-                        fromName = fromName(),
-                        toAddress = toAddress(),
-                        title = title(),
-                        htmlTemplateName = htmlTemplateName(),
-                        htmlTemplateParameters = htmlTemplateParameters().asJson(),
-                        isSuccess = true,
-                    )
-                )
+                sendNow()
+                saveSuccess()
                 log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
             }
         } catch (e: Exception) {
-            mailRepository.save(
-                MailEntity(
-                    fromAddress = fromAddress(),
-                    fromName = fromName(),
-                    toAddress = toAddress(),
-                    title = title(),
-                    htmlTemplateName = htmlTemplateName(),
-                    htmlTemplateParameters = htmlTemplateParameters().asJson(),
-                    isSuccess = false,
-                )
-            )
+            saveFailed()
             log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
         }
 
         return MailSendResult()
+    }
+
+    private fun saveFailed() {
+        mailRepository.save(
+            MailEntity(
+                fromAddress = fromAddress(),
+                fromName = fromName(),
+                toAddress = toAddress(),
+                title = title(),
+                htmlTemplateName = htmlTemplateName(),
+                htmlTemplateParameters = htmlTemplateParameters().asJson(),
+                isSuccess = false,
+            )
+        )
+    }
+
+    private fun saveSuccess() {
+        mailRepository.save(
+            MailEntity(
+                fromAddress = fromAddress(),
+                fromName = fromName(),
+                toAddress = toAddress(),
+                title = title(),
+                htmlTemplateName = htmlTemplateName(),
+                htmlTemplateParameters = htmlTemplateParameters().asJson(),
+                isSuccess = true,
+            )
+        )
+    }
+
+    private fun sendNow() {
+        javaMailSender.send(mimeMessage())
     }
 }
