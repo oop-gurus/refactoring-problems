@@ -6,7 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-class MailMessage(
+class SpringJavaMailMessage(
     private val mimeMessage: MimeMessage,
     private val htmlTemplateName: String,
     private val htmlTemplateParameters: HtmlTemplateParameters,
