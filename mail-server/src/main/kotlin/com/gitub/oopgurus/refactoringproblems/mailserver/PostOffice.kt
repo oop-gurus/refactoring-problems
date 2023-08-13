@@ -23,7 +23,7 @@ class PostOffice(
     private val scheduledExecutorService: ScheduledExecutorService,
 
 ) {
-    fun newMailMessage(): SpringJavaMailMessage {
+    fun newMailMessage(): MailMessage {
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
         val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
 
@@ -33,7 +33,7 @@ class PostOffice(
         addFromAddressTo(mimeMessageHelper)
         addTextTo(mimeMessageHelper)
 
-        return SpringJavaMailMessage(
+        val springJava = SpringJavaMailMessage(
             mimeMessage = mimeMessage,
             htmlTemplateName = getHtmlTemplateName(),
             htmlTemplateParameters = getHtmlTemplateParameters(),
@@ -46,6 +46,12 @@ class PostOffice(
             mailRepository = mailRepository,
             scheduledExecutorService = scheduledExecutorService,
         )
+        val scheduled = ScheduledMailMessage(
+            mailMessage = springJava,
+            scheduledExecutorService = scheduledExecutorService,
+            sendAfterSeconds = getSendAfterSeconds(),
+        )
+        return scheduled
     }
 
     private fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {

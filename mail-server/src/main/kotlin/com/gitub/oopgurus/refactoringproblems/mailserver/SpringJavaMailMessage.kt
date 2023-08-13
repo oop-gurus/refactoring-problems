@@ -53,32 +53,13 @@ class SpringJavaMailMessage(
 
     override fun send(): MailSendResult {
         try {
-            if (sendAfterSeconds != null) {
-                scheduledExecutorService.schedule(
-                    {
-                        try {
-                            sendNow()
-                            saveSuccess()
-                            log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-                        } catch (e: Exception) {
-                            saveFailed()
-                            log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
-                        }
-                    },
-                    sendAfterSeconds,
-                    TimeUnit.SECONDS
-                )
-
-            } else {
-                sendNow()
-                saveSuccess()
-                log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-            }
+            sendNow()
+            saveSuccess()
+            log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
         } catch (e: Exception) {
             saveFailed()
             log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
         }
-
         return MailSendResult()
     }
 
