@@ -22,7 +22,7 @@ class PostOffice(
     private val mailRepository: MailRepository,
     private val scheduledExecutorService: ScheduledExecutorService,
 
-) {
+    ) {
     fun newMailMessage(): MailMessage {
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
         val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
@@ -41,10 +41,8 @@ class PostOffice(
             fromAddress = getFromAddress(),
             fromName = getFromName(),
             toAddress = getToAddress(),
-            sendAfterSeconds = getSendAfterSeconds(),
             javaMailSender = javaMailSender,
             mailRepository = mailRepository,
-            scheduledExecutorService = scheduledExecutorService,
         )
         val scheduled = ScheduledMailMessage(
             mailMessage = springJava,

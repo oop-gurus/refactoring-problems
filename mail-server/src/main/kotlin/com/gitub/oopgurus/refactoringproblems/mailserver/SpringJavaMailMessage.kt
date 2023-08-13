@@ -14,10 +14,8 @@ class SpringJavaMailMessage(
     private val fromAddress: String,
     private val fromName: String,
     private val toAddress: String,
-    private val sendAfterSeconds: Long?,
     private val javaMailSender: JavaMailSender,
     private val mailRepository: MailRepository,
-    private val scheduledExecutorService: ScheduledExecutorService,
     ) : MailMessage {
 
     private val log = KotlinLogging.logger {}
