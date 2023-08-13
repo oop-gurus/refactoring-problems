@@ -17,7 +17,7 @@ Content-Type: application/json
 
 [
   {
-    "title": "메일 제목 03 (파일 첨부 됨)",
+    "title": "메일 제목 01 (파일 첨부 됨)",
     "fromAddress": "mail-server@localhost.com",
     "fromName": "mail-server (메일서버)",
     "toAddress": "sample-recipient@localhost.com",
@@ -47,6 +47,28 @@ Content-Type: application/json
       ]
     },
     "sendAfterSeconds": 5
+  },
+  {
+    "title": "메일 제목 02",
+    "fromAddress": "mail-server@localhost.com",
+    "fromName": "mail-server (메일서버)",
+    "toAddress": "sample-recipient@localhost.com",
+    "fileAttachments": [],
+    "htmlTemplateName": "HELLO_WORLD_01",
+    "htmlTemplateParameters": {
+      "title": "메일 제목 테스트 02",
+      "from": "mail-server (메일서버)",
+      "people": [
+        {
+          "name": "나재은",
+          "age": 30
+        },
+        {
+          "name": "홍길동",
+          "age": 22
+        }
+      ]
+    }
   }
 ]
 
