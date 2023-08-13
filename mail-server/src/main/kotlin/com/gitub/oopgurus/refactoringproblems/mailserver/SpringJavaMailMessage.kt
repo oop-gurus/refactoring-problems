@@ -18,7 +18,7 @@ class SpringJavaMailMessage(
     private val javaMailSender: JavaMailSender,
     private val mailRepository: MailRepository,
     private val scheduledExecutorService: ScheduledExecutorService,
-    ) {
+    ) : MailMessage {
 
     private val log = KotlinLogging.logger {}
 
@@ -51,7 +51,7 @@ class SpringJavaMailMessage(
         return htmlTemplateParameters
     }
 
-    fun send(): MailSendResult {
+    override fun send(): MailSendResult {
         try {
             if (sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
