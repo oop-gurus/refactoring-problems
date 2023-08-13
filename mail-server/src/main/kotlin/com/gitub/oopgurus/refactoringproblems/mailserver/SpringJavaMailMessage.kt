@@ -1,7 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.mailserver
 
 import jakarta.mail.internet.MimeMessage
-import mu.KotlinLogging
 import org.springframework.mail.javamail.JavaMailSender
 
 class SpringJavaMailMessage(
@@ -16,45 +15,32 @@ class SpringJavaMailMessage(
     private val mailRepository: MailRepository,
 ) : MailMessage {
 
-    private val log = KotlinLogging.logger {}
+    private val mailEntityGet: (isSuccess: Boolean) -> MailEntity = { isSuccess ->
+        MailEntity(
+            fromAddress = fromAddress,
+            fromName = fromName,
+            toAddress = toAddress,
+            title = title,
+            htmlTemplateName = htmlTemplateName,
+            htmlTemplateParameters = htmlTemplateParameters.asJson(),
+            isSuccess = isSuccess,
+        )
+    }
 
     override fun send(): MailSendResult {
-        try {
+        return try {
             javaMailSender.send(mimeMessage)
-            saveSuccess()
-            log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-        } catch (e: Exception) {
-            saveFailed()
-            log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
+
+            MailSendResultSuccess(
+                mailRepository = mailRepository,
+                mailEntityGet = mailEntityGet,
+            )
+        } catch (exception: Exception) {
+            MailSendResultFailed(
+                mailRepository = mailRepository,
+                mailEntityGet = mailEntityGet,
+                exception = exception,
+            )
         }
-        return MailSendResult()
-    }
-
-    private fun saveFailed() {
-        mailRepository.save(
-            MailEntity(
-                fromAddress = fromAddress,
-                fromName = fromName,
-                toAddress = toAddress,
-                title = title,
-                htmlTemplateName = htmlTemplateName,
-                htmlTemplateParameters = htmlTemplateParameters.asJson(),
-                isSuccess = false,
-            )
-        )
-    }
-
-    private fun saveSuccess() {
-        mailRepository.save(
-            MailEntity(
-                fromAddress = fromAddress,
-                fromName = fromName,
-                toAddress = toAddress,
-                title = title,
-                htmlTemplateName = htmlTemplateName,
-                htmlTemplateParameters = htmlTemplateParameters.asJson(),
-                isSuccess = true,
-            )
-        )
     }
 }
