@@ -56,9 +56,14 @@ class MailMessage(
             if (sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
                     {
-                        sendNow()
-                        saveSuccess()
-                        log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
+                        try {
+                            sendNow()
+                            saveSuccess()
+                            log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
+                        } catch (e: Exception) {
+                            saveFailed()
+                            log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
+                        }
                     },
                     sendAfterSeconds,
                     TimeUnit.SECONDS
