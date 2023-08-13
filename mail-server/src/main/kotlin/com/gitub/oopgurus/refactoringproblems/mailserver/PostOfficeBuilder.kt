@@ -24,15 +24,15 @@ class PostOfficeBuilder(
     private val scheduledExecutorService: ScheduledExecutorService,
 ) {
     private var getToAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
-    private var getFromAddress: () -> String = { throw IllegalStateException("getToAddress is not set") }
-    private var getHtmlTemplateName: () -> String = { throw IllegalStateException("getToAddress is not set") }
+    private var getFromAddress: () -> String = { throw IllegalStateException("getFromAddress is not set") }
+    private var getHtmlTemplateName: () -> String = { throw IllegalStateException("getHtmlTemplateName is not set") }
     private var getHtmlTemplate: () -> Template = { throw IllegalStateException("getHtmlTemplate is not set") }
     private var getTitle: () -> String = { throw IllegalStateException("getTitle is not set") }
-    private var getFromName: () -> String = { throw IllegalStateException("getTitle is not set") }
+    private var getFromName: () -> String = { throw IllegalStateException("getFromName is not set") }
     private var getHtmlTemplateParameters: () -> HtmlTemplateParameters =
-        { throw IllegalStateException("getTitle is not set") }
+        { throw IllegalStateException("getHtmlTemplateParameters is not set") }
 
-    private var getFileAttachmentDtoList: () -> List<FileAttachmentDto> = { throw IllegalStateException("getTitle is not set") }
+    private var getFileAttachmentDtoList: () -> List<FileAttachmentDto> = { throw IllegalStateException("getFileAttachmentDtoList is not set") }
     private var getSendAfterSeconds: () -> Long? = { throw IllegalStateException("getSendAfterSeconds is not set") }
 
 
