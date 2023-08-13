@@ -33,16 +33,23 @@ class PostOffice(
         addFromAddressTo(mimeMessageHelper)
         addTextTo(mimeMessageHelper)
 
+        val mailEntityGet: (isSuccess: Boolean) -> MailEntity = { isSuccess ->
+            MailEntity(
+                fromAddress = getToAddress(),
+                fromName = getFromName(),
+                toAddress = getFromAddress(),
+                title = getTitle(),
+                htmlTemplateName = getHtmlTemplateName(),
+                htmlTemplateParameters = getHtmlTemplateParameters().asJson(),
+                isSuccess = isSuccess,
+            )
+        }
+
         val springJava = SpringJavaMailMessage(
             mimeMessage = mimeMessage,
-            htmlTemplateName = getHtmlTemplateName(),
-            htmlTemplateParameters = getHtmlTemplateParameters(),
-            title = getTitle(),
-            fromAddress = getFromAddress(),
-            fromName = getFromName(),
-            toAddress = getToAddress(),
             javaMailSender = javaMailSender,
             mailRepository = mailRepository,
+            mailEntityGet = mailEntityGet,
         )
         val scheduled = ScheduledMailMessage(
             mailMessage = springJava,
