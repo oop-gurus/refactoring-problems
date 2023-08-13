@@ -23,31 +23,31 @@ class MailMessage(
     private val log = KotlinLogging.logger {}
 
 
-    fun mimeMessage(): MimeMessage {
+    private fun mimeMessage(): MimeMessage {
         return mimeMessage
     }
 
-    fun fromAddress(): String {
+    private fun fromAddress(): String {
         return fromAddress
     }
 
-    fun fromName(): String {
+    private fun fromName(): String {
         return fromName
     }
 
-    fun toAddress(): String {
+    private fun toAddress(): String {
         return toAddress
     }
 
-    fun title(): String {
+    private fun title(): String {
         return title
     }
 
-    fun htmlTemplateName(): String {
+    private fun htmlTemplateName(): String {
         return htmlTemplateName
     }
 
-    fun htmlTemplateParameters(): HtmlTemplateParameters {
+    private fun htmlTemplateParameters(): HtmlTemplateParameters {
         return htmlTemplateParameters
     }
 
