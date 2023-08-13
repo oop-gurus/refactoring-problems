@@ -18,7 +18,7 @@ class PostOffice(
     private val getFromName: () -> String,
     private val getToAddress: () -> String,
     private val getFileAttachmentDtoList: () -> List<FileAttachmentDto>,
-    private val getSendAfterSeconds: () -> Long?,
+    private val getSendAfter: () -> SendAfter?,
     private val mailRepository: MailRepository,
     private val scheduledExecutorService: ScheduledExecutorService,
 
@@ -47,7 +47,7 @@ class PostOffice(
         val scheduled = ScheduledMailMessage(
             mailMessage = springJava,
             scheduledExecutorService = scheduledExecutorService,
-            sendAfterSeconds = getSendAfterSeconds(),
+            sendAfter = getSendAfter(),
         )
         return scheduled
     }

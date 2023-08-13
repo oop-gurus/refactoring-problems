@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 class PostOfficeBuilder(
     private val mailSpamService: MailSpamService,
@@ -32,8 +33,9 @@ class PostOfficeBuilder(
     private var getHtmlTemplateParameters: () -> HtmlTemplateParameters =
         { throw IllegalStateException("getHtmlTemplateParameters is not set") }
 
-    private var getFileAttachmentDtoList: () -> List<FileAttachmentDto> = { throw IllegalStateException("getFileAttachmentDtoList is not set") }
-    private var getSendAfterSeconds: () -> Long? = { throw IllegalStateException("getSendAfterSeconds is not set") }
+    private var getFileAttachmentDtoList: () -> List<FileAttachmentDto> =
+        { throw IllegalStateException("getFileAttachmentDtoList is not set") }
+    private var getSendAfter: () -> SendAfter? = { throw IllegalStateException("getSendAfter is not set") }
 
 
     fun toAddress(toAddress: String): PostOfficeBuilder {
@@ -168,10 +170,20 @@ class PostOfficeBuilder(
     }
 
     fun sendAfterSeconds(sendAfterSeconds: Long?): PostOfficeBuilder {
-        if (sendAfterSeconds != null && sendAfterSeconds <= 0) {
+        if (sendAfterSeconds == null) {
+            getSendAfter = { null }
+            return this
+        }
+
+        if (sendAfterSeconds <= 0) {
             throw RuntimeException("sendAfterSeconds는 0 이상이어야 합니다")
         }
-        getSendAfterSeconds = {sendAfterSeconds}
+        getSendAfter = {
+            SendAfter(
+                amount = sendAfterSeconds,
+                unit = TimeUnit.SECONDS,
+            )
+        }
         return this
     }
 
@@ -186,7 +198,7 @@ class PostOfficeBuilder(
             getFromName = getFromName,
             getToAddress = getToAddress,
             getFileAttachmentDtoList = getFileAttachmentDtoList,
-            getSendAfterSeconds = getSendAfterSeconds,
+            getSendAfter = getSendAfter,
             mailRepository = mailRepository,
             scheduledExecutorService = scheduledExecutorService,
         )
