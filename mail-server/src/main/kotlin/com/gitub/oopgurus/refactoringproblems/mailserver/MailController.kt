@@ -10,14 +10,31 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class MailController(
     private val mailService: MailService,
+    private val mailMessageBuilderFactory: MailMessageBuilderFactory,
 ) {
     @PostMapping(
         path = ["/v1/mails"],
         consumes = ["application/json"],
         produces = ["application/json"]
     )
-    fun sendMail(@RequestBody sendMailDto: List<SendMailDto>): ResponseEntity<Any> {
-        mailService.send(sendMailDto)
+    fun sendMail(@RequestBody sendMailDtoList: List<SendMailDto>): ResponseEntity<Any> {
+        val mailMessageList = sendMailDtoList.map { sendMailDto ->
+            mailMessageBuilderFactory.create()
+                .toAddress(sendMailDto.toAddress)
+                .fromName(sendMailDto.fromName)
+                .fromAddress(sendMailDto.fromAddress)
+                .title(sendMailDto.title)
+                .htmlTemplateName(sendMailDto.htmlTemplateName)
+                .htmlTemplateParameters(sendMailDto.htmlTemplateParameters)
+                .fileAttachments(sendMailDto.fileAttachments)
+                .sendAfterSeconds(sendMailDto.sendAfterSeconds)
+                .build()
+        }
+
+        mailMessageList.forEach { mailMessage ->
+            mailMessage.send()
+                .register()
+        }
         return ResponseEntity.ok().build()
     }
 
