@@ -54,6 +54,14 @@ class MailService(
         // 동작2: 그 결과를 저장한다
         // 세부사항: 발송이 성공한 경우 / 발송이 실패한 경우 (실패한 이유도 같이)
         // 세부사항: db에 저장 / 로그에 저장
+
+        // 코드에서는 무엇을 어떻게 표현해야 하지?
+        // 무엇을: 동작을
+        // 어떻게: 세부사항을 숨겨서
+
+
+        // 동작2(결과를 저장한다)는 동작1(메일을 보낸다)에 의존적이므로 다음과 같이 표현
+        mailMessage.send().register()
         try {
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
