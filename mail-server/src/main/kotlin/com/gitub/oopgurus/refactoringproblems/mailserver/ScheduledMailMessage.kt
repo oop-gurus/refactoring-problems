@@ -5,31 +5,22 @@ import java.util.concurrent.CompletionStage
 import java.util.concurrent.ScheduledExecutorService
 
 class ScheduledMailMessage(
+    private val sendAfter: SendAfter,
     private val scheduledExecutorService: ScheduledExecutorService,
-    private val sendAfter: SendAfter?,
     private val mailMessage: MailMessage,
 ) : MailMessage {
-    override fun send(): MailSendResult {
-        return if (sendAfter == null) {
-            sendNow()
-        } else {
-            sendAsync()
-        }
-    }
 
-    private fun sendAsync(): MailSendResultAsync {
+    override fun send(): MailSendResult {
         val delayedExecutor = CompletableFuture.delayedExecutor(
-            sendAfter!!.amount(),
-            sendAfter!!.unit(),
+            sendAfter.amount(),
+            sendAfter.unit(),
             scheduledExecutorService
         )
         val completionStage: CompletionStage<MailSendResult> = CompletableFuture.supplyAsync(
-            { sendNow() },
+            { mailMessage.send() },
             delayedExecutor
         )
 
         return MailSendResultAsync(completionStage)
     }
-
-    private fun sendNow() = mailMessage.send()
 }

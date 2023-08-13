@@ -192,21 +192,36 @@ class PostOfficeBuilder(
     }
 
     fun build(): MailMessage {
-        val mailSendResultFactory = MailSendResultFactory(
+        return toScheduled(createBaseMailMessage())
+    }
+
+    private fun toScheduled(mailMessage: MailMessage): MailMessage {
+        val sendAfter = getSendAfter()
+        val scheduled = if (sendAfter == null) {
+            mailMessage
+        } else {
+            ScheduledMailMessage(
+                mailMessage = mailMessage,
+                scheduledExecutorService = scheduledExecutorService,
+                sendAfter = sendAfter,
+            )
+        }
+        return scheduled
+    }
+
+    private fun createBaseMailMessage(): MailMessage {
+        return SpringJavaMailMessage(
+            javaMailSender = javaMailSender,
+            mimeMessage = newMimeMessage(),
+            mailSendResultFactory = newMailSendResultFactory(),
+        )
+    }
+
+    private fun newMailSendResultFactory(): MailSendResultFactory {
+        return MailSendResultFactory(
             mailRepository = mailRepository,
             mailEntityGet = newMailEntityGet(),
         )
-        val springJava = SpringJavaMailMessage(
-            javaMailSender = javaMailSender,
-            mimeMessage = newMimeMessage(),
-            mailSendResultFactory = mailSendResultFactory,
-        )
-        val scheduled = ScheduledMailMessage(
-            mailMessage = springJava,
-            scheduledExecutorService = scheduledExecutorService,
-            sendAfter = getSendAfter(),
-        )
-        return scheduled
     }
 
     private fun newMimeMessage(): MimeMessage {
