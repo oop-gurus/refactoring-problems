@@ -4,10 +4,10 @@ import jakarta.mail.internet.MimeMessage
 
 data class MailMessage (
     val mimeMessage: MimeMessage,
-    private val htmlTemplateName: String,
-    private val htmlTemplateParameters: HtmlTemplateParameters,
-    private val title: String,
-    private val fromAddress: String,
-    private val fromName: String,
-    private val toAddress: String,
+    val htmlTemplateName: String,
+    val htmlTemplateParameters: HtmlTemplateParameters,
+    val title: String,
+    val fromAddress: String,
+    val fromName: String,
+    val toAddress: String,
 )

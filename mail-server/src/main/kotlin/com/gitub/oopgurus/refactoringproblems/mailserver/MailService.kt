@@ -1,8 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.mailserver
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.github.jknack.handlebars.Handlebars
-import com.github.jknack.handlebars.Helper
 import mu.KotlinLogging
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Component
@@ -19,14 +17,10 @@ class MailService(
     private val mailRepository: MailRepository,
     private val objectMapper: ObjectMapper,
     private val mailSpamService: MailSpamService,
+    private val postOfficeBuilderFactory: PostOfficeBuilderFactory
 ) {
 
     private val log = KotlinLogging.logger {}
-    private val handlebars = Handlebars().also {
-        it.registerHelperMissing(Helper<Any> { _, options ->
-            throw IllegalArgumentException("누락된 파라메터 발생: [${options.helperName}]")
-        })
-    }
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
 
@@ -37,63 +31,30 @@ class MailService(
     }
 
     private fun sendSingle(sendMailDto: SendMailDto) {
-        val toAddressSupplier = ToAddressSupplierFactory(
-            mailSpamService = mailSpamService,
-            toAddress = sendMailDto.toAddress,
-        ).create()
-        val fromAddressSupplier = FromAddressSupplierFactory(
-            fromAddress = sendMailDto.fromAddress,
-        ).create()
-        val titleSupplier = TitleSupplierFactory(
-            title = sendMailDto.title,
-        ).create()
-        val htmlTemplateNameSupplier = HtmlTemplateNameSupplierFactory(
-            htmlTemplateName = sendMailDto.htmlTemplateName,
-        ).create()
-        val fromNameSupplier = FromNameSupplierFactory(
-            fromName = sendMailDto.fromName,
-        ).create()
-        val htmlTemplateSupplier = HtmlTemplateSupplierFactory(
-            mailTemplateRepository = mailTemplateRepository,
-            htmlTemplateNameSupplier = htmlTemplateNameSupplier,
-            handlebars = handlebars,
-        ).create()
-        val htmlTemplateParameters = HtmlTemplateParameters(
-            parameters = sendMailDto.htmlTemplateParameters,
-            objectMapper = objectMapper,
-        )
-        val fileAttachmentDtoListSupplier = FileAttachmentDtoListSupplierFactory(
-            restTemplate = restTemplate,
-            fileAttachments = sendMailDto.fileAttachments,
-        ).create()
-
-        val postOffice = PostOffice(
-            javaMailSender = javaMailSender,
-            htmlTemplateParameters = htmlTemplateParameters,
-            titleSupplier = titleSupplier,
-            htmlTemplateSupplier = htmlTemplateSupplier,
-            htmlTemplateNameSupplier = htmlTemplateNameSupplier,
-            fromAddressSupplier = fromAddressSupplier,
-            fromNameSupplier = fromNameSupplier,
-            toAddressSupplier = toAddressSupplier,
-            fileAttachmentDtoListSupplier = fileAttachmentDtoListSupplier,
-        )
+        val postOffice = postOfficeBuilderFactory.create()
+            .toAddress(sendMailDto.toAddress)
+            .fromName(sendMailDto.fromName)
+            .fromAddress(sendMailDto.fromAddress)
+            .title(sendMailDto.title)
+            .htmlTemplateName(sendMailDto.htmlTemplateName)
+            .htmlTemplateParameters(sendMailDto.htmlTemplateParameters)
+            .fileAttachments(sendMailDto.fileAttachments)
+            .build()
+        val mailMessage = postOffice.newMailMessage()
 
         try {
-            val mailMessage = postOffice.newMailMessage()
-
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
                     {
                         javaMailSender.send(mailMessage.mimeMessage)
                         mailRepository.save(
                             MailEntity(
-                                fromAddress = fromAddressSupplier(),
-                                fromName = fromNameSupplier(),
-                                toAddress = toAddressSupplier(),
-                                title = titleSupplier(),
-                                htmlTemplateName = htmlTemplateNameSupplier(),
-                                htmlTemplateParameters = htmlTemplateParameters.asJson(),
+                                fromAddress = mailMessage.fromAddress,
+                                fromName = mailMessage.fromName,
+                                toAddress = mailMessage.toAddress,
+                                title = mailMessage.title,
+                                htmlTemplateName = mailMessage.htmlTemplateName,
+                                htmlTemplateParameters = mailMessage.htmlTemplateParameters.asJson(),
                                 isSuccess = true,
                             )
                         )
@@ -107,12 +68,12 @@ class MailService(
                 javaMailSender.send(mailMessage.mimeMessage)
                 mailRepository.save(
                     MailEntity(
-                        fromAddress = fromAddressSupplier(),
-                        fromName = fromNameSupplier(),
-                        toAddress = toAddressSupplier(),
-                        title = titleSupplier(),
-                        htmlTemplateName = htmlTemplateNameSupplier(),
-                        htmlTemplateParameters = htmlTemplateParameters.asJson(),
+                        fromAddress = mailMessage.fromAddress,
+                        fromName = mailMessage.fromName,
+                        toAddress = mailMessage.toAddress,
+                        title = mailMessage.title,
+                        htmlTemplateName = mailMessage.htmlTemplateName,
+                        htmlTemplateParameters = mailMessage.htmlTemplateParameters.asJson(),
                         isSuccess = true,
                     )
                 )
@@ -121,12 +82,12 @@ class MailService(
         } catch (e: Exception) {
             mailRepository.save(
                 MailEntity(
-                    fromAddress = fromAddressSupplier(),
-                    fromName = fromNameSupplier(),
-                    toAddress = toAddressSupplier(),
-                    title = titleSupplier(),
-                    htmlTemplateName = htmlTemplateNameSupplier(),
-                    htmlTemplateParameters = htmlTemplateParameters.asJson(),
+                    fromAddress = mailMessage.fromAddress,
+                    fromName = mailMessage.fromName,
+                    toAddress = mailMessage.toAddress,
+                    title = mailMessage.title,
+                    htmlTemplateName = mailMessage.htmlTemplateName,
+                    htmlTemplateParameters = mailMessage.htmlTemplateParameters.asJson(),
                     isSuccess = false,
                 )
             )
