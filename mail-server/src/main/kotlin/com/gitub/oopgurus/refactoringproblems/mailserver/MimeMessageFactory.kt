@@ -15,7 +15,7 @@ class MimeMessageFactory(
     private val fromNameSupplier: () -> String,
     private val toAddressSupplier: () -> String,
     private val htmlTemplateParameters: HtmlTemplateParameters,
-    private val fileAttachmentDtoList: List<MailService.FileAttachmentDto>,
+    private val fileAttachmentDtoListSupplier: () -> List<MailService.FileAttachmentDto>,
 ) {
     fun create(): MimeMessage {
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
@@ -31,7 +31,7 @@ class MimeMessageFactory(
     }
 
     private fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {
-        fileAttachmentDtoList.forEach {
+        fileAttachmentDtoListSupplier().forEach {
             mimeMessageHelper.addAttachment(it.name, it.resultFile)
         }
     }
@@ -54,13 +54,13 @@ class MimeMessageFactory(
     }
 
     private fun totalByteSize(): Long {
-        return fileAttachmentDtoList
+        return fileAttachmentDtoListSupplier()
             .map { it.clientHttpResponse.headers.contentLength }
             .reduceOrNull { acc, size -> acc + size } ?: 0
     }
 
     private fun count(): Int {
-        return fileAttachmentDtoList.size
+        return fileAttachmentDtoListSupplier().size
     }
 
     private fun addToAddressTo(mimeMessageHelper: MimeMessageHelper) {

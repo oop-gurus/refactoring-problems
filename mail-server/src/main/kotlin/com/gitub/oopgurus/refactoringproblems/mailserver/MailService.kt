@@ -48,49 +48,45 @@ class MailService(
             mailSpamService = mailSpamService,
             toAddress = sendMailDto.toAddress,
         ).create()
-
         val fromAddressSupplier = FromAddressSupplierFactory(
             fromAddress = sendMailDto.fromAddress,
         ).create()
-
         val titleSupplier = TitleSupplierFactory(
             title = sendMailDto.title,
         ).create()
-
         val htmlTemplateNameSupplier = HtmlTemplateNameSupplierFactory(
             htmlTemplateName = sendMailDto.htmlTemplateName,
         ).create()
-
         val fromNameSupplier = FromNameSupplierFactory(
             fromName = sendMailDto.fromName,
         ).create()
-
         val htmlTemplateSupplier = HtmlTemplateSupplierFactory(
             mailTemplateRepository = mailTemplateRepository,
             htmlTemplateNameSupplier = htmlTemplateNameSupplier,
             handlebars = handlebars,
         ).create()
-
         val htmlTemplateParameters = HtmlTemplateParameters(
             parameters = sendMailDto.htmlTemplateParameters,
             objectMapper = objectMapper,
         )
+        val fileAttachmentDtoListSupplier = FileAttachmentDtoListSupplierFactory(
+            restTemplate = restTemplate,
+            fileAttachments = sendMailDto.fileAttachments,
+        ).create()
 
-        val attachmentsSupplier = MimeMessageFactorySupplierFactory(
+        val mimeMessageFactory = MimeMessageFactory(
             javaMailSender = javaMailSender,
             htmlTemplateParameters = htmlTemplateParameters,
-            fileAttachments = sendMailDto.fileAttachments,
-            restTemplate = restTemplate,
             titleSupplier = titleSupplier,
             htmlTemplateSupplier = htmlTemplateSupplier,
             fromAddressSupplier = fromAddressSupplier,
             fromNameSupplier = fromNameSupplier,
             toAddressSupplier = toAddressSupplier,
-        ).create()
+            fileAttachmentDtoListSupplier = fileAttachmentDtoListSupplier,
+        )
 
         try {
-            val attachments = attachmentsSupplier()
-            val mimeMessage = attachments.create()
+            val mimeMessage = mimeMessageFactory.create()
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(

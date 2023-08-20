@@ -1,27 +1,18 @@
 package com.gitub.oopgurus.refactoringproblems.mailserver
 
-import com.github.jknack.handlebars.Template
 import org.springframework.http.HttpMethod
 import org.springframework.http.client.ClientHttpResponse
-import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.util.StreamUtils
 import org.springframework.util.unit.DataSize
 import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.FileOutputStream
 
-class MimeMessageFactorySupplierFactory(
-    private val javaMailSender: JavaMailSender,
-    private val htmlTemplateParameters: HtmlTemplateParameters,
-    private val fileAttachments: List<FileAttachment>,
+class FileAttachmentDtoListSupplierFactory(
     private val restTemplate: RestTemplate,
-    private val titleSupplier: () -> String,
-    private val htmlTemplateSupplier: () -> Template,
-    private val fromAddressSupplier: () -> String,
-    private val fromNameSupplier: () -> String,
-    private val toAddressSupplier: () -> String,
+    private val fileAttachments: List<FileAttachment>,
 ) {
-    fun create(): () -> MimeMessageFactory {
+    fun create(): () -> List<MailService.FileAttachmentDto> {
         val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
             val fileAttachmentDto = restTemplate.execute(
                 attachment.url,
@@ -49,17 +40,6 @@ class MimeMessageFactorySupplierFactory(
             fileAttachmentDto
         }
 
-        return {
-            MimeMessageFactory(
-                javaMailSender = javaMailSender,
-                titleSupplier = titleSupplier,
-                htmlTemplateSupplier = htmlTemplateSupplier,
-                htmlTemplateParameters = htmlTemplateParameters,
-                fromAddressSupplier = fromAddressSupplier,
-                fromNameSupplier = fromNameSupplier,
-                toAddressSupplier = toAddressSupplier,
-                fileAttachmentDtoList = fileAttachmentDtoList,
-            )
-        }
+        return { fileAttachmentDtoList }
     }
 }
