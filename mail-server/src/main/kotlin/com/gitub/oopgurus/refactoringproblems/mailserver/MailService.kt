@@ -67,18 +67,16 @@ class MailService(
             title = sendMailDto.title,
         ).create()
 
-        // htmlTemplateName
-        if (sendMailDto.htmlTemplateName.isBlank()) {
-            throw RuntimeException("템플릿 이름이 비어있습니다")
-        }
+        val htmlTemplateNameSupplier = HtmlTemplateNameSupplierFactory(
+            htmlTemplateName = sendMailDto.htmlTemplateName,
+        ).create()
 
-        // fromName
-        if (sendMailDto.fromName.isBlank()) {
-            throw RuntimeException("발신자 이름이 비어있습니다")
-        }
+        val fromNameSupplier = FromNameSupplierFactory(
+            fromName = sendMailDto.fromName,
+        ).create()
 
-        val htmlTemplate = mailTemplateRepository.findByName(sendMailDto.htmlTemplateName)
-            ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${sendMailDto.htmlTemplateName}]")
+        val htmlTemplate = mailTemplateRepository.findByName(htmlTemplateNameSupplier())
+            ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${htmlTemplateNameSupplier()}]")
         val template: Template = handlebars.compileInline(htmlTemplate.htmlBody)
         val html = template.apply(sendMailDto.htmlTemplateParameters)
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
@@ -86,7 +84,7 @@ class MailService(
         try {
             val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
             mimeMessageHelper.setText(html, true)
-            mimeMessageHelper.setFrom(InternetAddress(fromAddressSupplier(), sendMailDto.fromName, "UTF-8"))
+            mimeMessageHelper.setFrom(InternetAddress(fromAddressSupplier(), fromNameSupplier(), "UTF-8"))
             mimeMessageHelper.setTo(toAddressSupplier())
 
             val fileResults = sendMailDto.fileAttachments.mapIndexed { index, attachment ->
@@ -151,10 +149,10 @@ class MailService(
                         mailRepository.save(
                             MailEntity(
                                 fromAddress = fromAddressSupplier(),
-                                fromName = sendMailDto.fromName,
+                                fromName = fromNameSupplier(),
                                 toAddress = toAddressSupplier(),
                                 title = titleSupplier(),
-                                htmlTemplateName = sendMailDto.htmlTemplateName,
+                                htmlTemplateName = htmlTemplateNameSupplier(),
                                 htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                                 isSuccess = true,
                             )
@@ -170,10 +168,10 @@ class MailService(
                 mailRepository.save(
                     MailEntity(
                         fromAddress = fromAddressSupplier(),
-                        fromName = sendMailDto.fromName,
+                        fromName = fromNameSupplier(),
                         toAddress = toAddressSupplier(),
                         title = titleSupplier(),
-                        htmlTemplateName = sendMailDto.htmlTemplateName,
+                        htmlTemplateName = htmlTemplateNameSupplier(),
                         htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                         isSuccess = true,
                     )
@@ -184,10 +182,10 @@ class MailService(
             mailRepository.save(
                 MailEntity(
                     fromAddress = fromAddressSupplier(),
-                    fromName = sendMailDto.fromName,
+                    fromName = fromNameSupplier(),
                     toAddress = toAddressSupplier(),
                     title = titleSupplier(),
-                    htmlTemplateName = sendMailDto.htmlTemplateName,
+                    htmlTemplateName = htmlTemplateNameSupplier(),
                     htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
                     isSuccess = false,
                 )
