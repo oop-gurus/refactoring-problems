@@ -81,7 +81,11 @@ class MailService(
             handlebars = handlebars,
         ).create()
 
-        val html = htmlTemplateSupplier().apply(sendMailDto.htmlTemplateParameters)
+        val htmlTemplateParameters = HtmlTemplateParameters(
+            parameters = sendMailDto.htmlTemplateParameters,
+            objectMapper = objectMapper,
+        )
+        val html = htmlTemplateSupplier().apply(htmlTemplateParameters.asMap())
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
         try {
@@ -156,7 +160,7 @@ class MailService(
                                 toAddress = toAddressSupplier(),
                                 title = titleSupplier(),
                                 htmlTemplateName = htmlTemplateNameSupplier(),
-                                htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                                htmlTemplateParameters = htmlTemplateParameters.asJson(),
                                 isSuccess = true,
                             )
                         )
@@ -175,7 +179,7 @@ class MailService(
                         toAddress = toAddressSupplier(),
                         title = titleSupplier(),
                         htmlTemplateName = htmlTemplateNameSupplier(),
-                        htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                        htmlTemplateParameters = htmlTemplateParameters.asJson(),
                         isSuccess = true,
                     )
                 )
@@ -189,7 +193,7 @@ class MailService(
                     toAddress = toAddressSupplier(),
                     title = titleSupplier(),
                     htmlTemplateName = htmlTemplateNameSupplier(),
-                    htmlTemplateParameters = objectMapper.writeValueAsString(sendMailDto.htmlTemplateParameters),
+                    htmlTemplateParameters = htmlTemplateParameters.asJson(),
                     isSuccess = false,
                 )
             )
