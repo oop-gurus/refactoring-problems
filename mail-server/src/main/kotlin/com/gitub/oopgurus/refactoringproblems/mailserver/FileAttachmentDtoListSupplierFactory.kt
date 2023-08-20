@@ -12,7 +12,7 @@ class FileAttachmentDtoListSupplierFactory(
     private val restTemplate: RestTemplate,
     private val fileAttachments: List<FileAttachment>,
 ) {
-    fun create(): () -> List<MailService.FileAttachmentDto> {
+    fun create(): () -> List<FileAttachmentDto> {
         val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
             val fileAttachmentDto = restTemplate.execute(
                 attachment.url,
@@ -22,7 +22,7 @@ class FileAttachmentDtoListSupplierFactory(
                     val id = "file-${index}-${java.util.UUID.randomUUID()}"
                     val tempFile = File.createTempFile(id, "")
                     StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
-                    MailService.FileAttachmentDto(
+                    FileAttachmentDto(
                         resultFile = tempFile,
                         name = attachment.name,
                         clientHttpResponse = clientHttpResponse

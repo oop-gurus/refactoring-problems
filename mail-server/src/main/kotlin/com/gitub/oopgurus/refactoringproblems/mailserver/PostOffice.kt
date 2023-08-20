@@ -7,17 +7,18 @@ import jakarta.mail.internet.MimeUtility
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 
-class MimeMessageFactory(
+class PostOffice(
     private val javaMailSender: JavaMailSender,
     private val titleSupplier: () -> String,
     private val htmlTemplateSupplier: () -> Template,
+    private val htmlTemplateNameSupplier: () -> String,
     private val fromAddressSupplier: () -> String,
     private val fromNameSupplier: () -> String,
     private val toAddressSupplier: () -> String,
     private val htmlTemplateParameters: HtmlTemplateParameters,
-    private val fileAttachmentDtoListSupplier: () -> List<MailService.FileAttachmentDto>,
+    private val fileAttachmentDtoListSupplier: () -> List<FileAttachmentDto>,
 ) {
-    fun create(): MimeMessage {
+    fun newMailMessage(): MailMessage {
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
         val mimeMessageHelper = MimeMessageHelper(mimeMessage, true, "UTF-8") // use multipart (true)
 
@@ -27,7 +28,15 @@ class MimeMessageFactory(
         addFromAddressTo(mimeMessageHelper)
         addTextTo(mimeMessageHelper)
 
-        return mimeMessage
+        return MailMessage(
+            mimeMessage = mimeMessage,
+            htmlTemplateName = htmlTemplateNameSupplier(),
+            htmlTemplateParameters = htmlTemplateParameters,
+            title = titleSupplier(),
+            fromAddress = fromAddressSupplier(),
+            fromName = fromNameSupplier(),
+            toAddress = toAddressSupplier(),
+        )
     }
 
     private fun addFilesTo(mimeMessageHelper: MimeMessageHelper) {

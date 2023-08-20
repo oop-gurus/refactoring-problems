@@ -4,11 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.jknack.handlebars.Handlebars
 import com.github.jknack.handlebars.Helper
 import mu.KotlinLogging
-import org.springframework.http.client.ClientHttpResponse
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
-import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -25,17 +23,12 @@ class MailService(
 
     private val log = KotlinLogging.logger {}
     private val handlebars = Handlebars().also {
-        it.registerHelperMissing(Helper<Any> { context, options ->
+        it.registerHelperMissing(Helper<Any> { _, options ->
             throw IllegalArgumentException("누락된 파라메터 발생: [${options.helperName}]")
         })
     }
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
-    data class FileAttachmentDto(
-        val resultFile: File,
-        val name: String,
-        val clientHttpResponse: ClientHttpResponse,
-    )
 
     fun send(sendMailDtos: List<SendMailDto>) {
         sendMailDtos.forEach {
@@ -74,11 +67,12 @@ class MailService(
             fileAttachments = sendMailDto.fileAttachments,
         ).create()
 
-        val mimeMessageFactory = MimeMessageFactory(
+        val postOffice = PostOffice(
             javaMailSender = javaMailSender,
             htmlTemplateParameters = htmlTemplateParameters,
             titleSupplier = titleSupplier,
             htmlTemplateSupplier = htmlTemplateSupplier,
+            htmlTemplateNameSupplier = htmlTemplateNameSupplier,
             fromAddressSupplier = fromAddressSupplier,
             fromNameSupplier = fromNameSupplier,
             toAddressSupplier = toAddressSupplier,
@@ -86,12 +80,12 @@ class MailService(
         )
 
         try {
-            val mimeMessage = mimeMessageFactory.create()
+            val mailMessage = postOffice.newMailMessage()
 
             if (sendMailDto.sendAfterSeconds != null) {
                 scheduledExecutorService.schedule(
                     {
-                        javaMailSender.send(mimeMessage)
+                        javaMailSender.send(mailMessage.mimeMessage)
                         mailRepository.save(
                             MailEntity(
                                 fromAddress = fromAddressSupplier(),
@@ -110,7 +104,7 @@ class MailService(
                 )
 
             } else {
-                javaMailSender.send(mimeMessage)
+                javaMailSender.send(mailMessage.mimeMessage)
                 mailRepository.save(
                     MailEntity(
                         fromAddress = fromAddressSupplier(),
