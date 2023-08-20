@@ -75,10 +75,13 @@ class MailService(
             fromName = sendMailDto.fromName,
         ).create()
 
-        val htmlTemplate = mailTemplateRepository.findByName(htmlTemplateNameSupplier())
-            ?: throw RuntimeException("템플릿이 존재하지 않습니다: [${htmlTemplateNameSupplier()}]")
-        val template: Template = handlebars.compileInline(htmlTemplate.htmlBody)
-        val html = template.apply(sendMailDto.htmlTemplateParameters)
+        val htmlTemplateSupplier = HtmlTemplateSupplierFactory(
+            mailTemplateRepository = mailTemplateRepository,
+            htmlTemplateNameSupplier = htmlTemplateNameSupplier,
+            handlebars = handlebars,
+        ).create()
+
+        val html = htmlTemplateSupplier().apply(sendMailDto.htmlTemplateParameters)
         val mimeMessage: MimeMessage = javaMailSender.createMimeMessage()
 
         try {
