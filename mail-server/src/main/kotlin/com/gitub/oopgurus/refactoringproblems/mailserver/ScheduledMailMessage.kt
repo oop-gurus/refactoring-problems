@@ -3,12 +3,10 @@ package com.gitub.oopgurus.refactoringproblems.mailserver
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledThreadPoolExecutor
-import java.util.concurrent.TimeUnit
 
 class ScheduledMailMessage(
     private val mailMessage: MailMessage,
-    private val scheduledExecutorService: ScheduledThreadPoolExecutor,
+    private val scheduledExecutorService: ScheduledExecutorService,
     private val sendAfter: SendAfter?
 ): MailMessage {
     override fun send(): MailSendResult {
