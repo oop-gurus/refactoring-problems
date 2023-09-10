@@ -6,12 +6,12 @@ import com.github.jknack.handlebars.Template
 import org.springframework.http.HttpMethod
 import org.springframework.http.client.ClientHttpResponse
 import org.springframework.mail.javamail.JavaMailSender
-import org.springframework.util.StreamUtils
 import org.springframework.util.unit.DataSize
 import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 class PostOfficeBuilder(
     private val mailSpamService: MailSpamService,
@@ -31,7 +31,7 @@ class PostOfficeBuilder(
     private var fromNameSupplier: () -> String = { throw IllegalStateException("fromNameSupplier is not set") }
     private var htmlTemplateParametersSupplier: () -> HtmlTemplateParameters = { throw IllegalStateException("htmlTemplateParametersSupplier is not set") }
     private var fileAttachmentDtoListSupplier: () -> List<FileAttachmentDto> = { throw IllegalStateException("fileAttachmentDtoListSupplier is not set") }
-    private var sendAfterSecondsSupplier: () -> Long? = { throw IllegalStateException("getSendAfterSeconds is not set") }
+    private var sendAfterSupplier: () -> SendAfter? = { throw IllegalStateException("sendAfterSupplier is not set") }
 
 
     fun toAddress(toAddress: String): PostOfficeBuilder {
@@ -162,10 +162,20 @@ class PostOfficeBuilder(
     }
 
     fun sendAfterSeconds(sendAfterSeconds: Long?): PostOfficeBuilder {
-        if (sendAfterSeconds != null && sendAfterSeconds <= 0) {
+        if (sendAfterSeconds == null) {
+            sendAfterSupplier = { null }
+            return this
+        }
+        if (sendAfterSeconds <= 0) {
             throw RuntimeException("sendAfterSeconds는 0 이상이어야 합니다")
         }
-        sendAfterSecondsSupplier = {sendAfterSeconds}
+
+        sendAfterSupplier = {
+            SendAfter(
+                amount = sendAfterSeconds,
+                unit = TimeUnit.SECONDS
+            )
+        }
         return this
     }
 
@@ -181,7 +191,7 @@ class PostOfficeBuilder(
             htmlTemplateNameSupplier = htmlTemplateNameSupplier,
             htmlTemplateParameters = htmlTemplateParametersSupplier(),
             mailRepository = mailRepository,
-            sendAfterSecondsSupplier = sendAfterSecondsSupplier,
+            sendAfterSupplier = sendAfterSupplier,
             scheduledExecutorService = scheduledExecutorService,
         )
     }

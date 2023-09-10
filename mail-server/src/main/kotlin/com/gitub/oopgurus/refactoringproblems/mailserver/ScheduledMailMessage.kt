@@ -6,14 +6,14 @@ import java.util.concurrent.TimeUnit
 class ScheduledMailMessage(
     private val mailMessage: MailMessage,
     private val scheduledExecutorService: ScheduledExecutorService,
-    private val sendAfterSeconds: Long?
+    private val sendAfter: SendAfter?
 ): MailMessage {
     override fun send(): MailSendResult {
-        return if (sendAfterSeconds != null) {
+        return if (sendAfter != null) {
             scheduledExecutorService.schedule(
                 { mailMessage.send() },
-                sendAfterSeconds,
-                TimeUnit.SECONDS
+                sendAfter.amount,
+                sendAfter.unit
             )
 
             MailSendResult()
