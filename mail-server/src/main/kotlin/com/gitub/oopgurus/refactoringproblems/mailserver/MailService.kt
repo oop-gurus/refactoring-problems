@@ -1,28 +1,12 @@
 package com.gitub.oopgurus.refactoringproblems.mailserver
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import mu.KotlinLogging
-import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Component
-import org.springframework.web.client.RestTemplate
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-
 
 @Component
 class MailService(
-    private val javaMailSender: JavaMailSender,
-    private val restTemplate: RestTemplate,
     private val mailTemplateRepository: MailTemplateRepository,
-    private val mailRepository: MailRepository,
-    private val objectMapper: ObjectMapper,
-    private val mailSpamService: MailSpamService,
     private val postOfficeBuilderFactory: PostOfficeBuilderFactory
 ) {
-
-    private val log = KotlinLogging.logger {}
-    private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
-
 
     fun send(sendMailDtos: List<SendMailDto>) {
         sendMailDtos.forEach {
@@ -42,57 +26,7 @@ class MailService(
             .build()
         val mailMessage = postOffice.newMailMessage()
 
-        try {
-            if (sendMailDto.sendAfterSeconds != null) {
-                scheduledExecutorService.schedule(
-                    {
-                        javaMailSender.send(mailMessage.mimeMessage)
-                        mailRepository.save(
-                            MailEntity(
-                                fromAddress = mailMessage.fromAddress,
-                                fromName = mailMessage.fromName,
-                                toAddress = mailMessage.toAddress,
-                                title = mailMessage.title,
-                                htmlTemplateName = mailMessage.htmlTemplateName,
-                                htmlTemplateParameters = mailMessage.htmlTemplateParameters.asJson(),
-                                isSuccess = true,
-                            )
-                        )
-                        log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-                    },
-                    sendMailDto.sendAfterSeconds,
-                    TimeUnit.SECONDS
-                )
-
-            } else {
-                javaMailSender.send(mailMessage.mimeMessage)
-                mailRepository.save(
-                    MailEntity(
-                        fromAddress = mailMessage.fromAddress,
-                        fromName = mailMessage.fromName,
-                        toAddress = mailMessage.toAddress,
-                        title = mailMessage.title,
-                        htmlTemplateName = mailMessage.htmlTemplateName,
-                        htmlTemplateParameters = mailMessage.htmlTemplateParameters.asJson(),
-                        isSuccess = true,
-                    )
-                )
-                log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
-            }
-        } catch (e: Exception) {
-            mailRepository.save(
-                MailEntity(
-                    fromAddress = mailMessage.fromAddress,
-                    fromName = mailMessage.fromName,
-                    toAddress = mailMessage.toAddress,
-                    title = mailMessage.title,
-                    htmlTemplateName = mailMessage.htmlTemplateName,
-                    htmlTemplateParameters = mailMessage.htmlTemplateParameters.asJson(),
-                    isSuccess = false,
-                )
-            )
-            log.error(e) { "MailServiceImpl.sendMail() :: FAILED" }
-        }
+        mailMessage.send().register()
     }
 
     fun creatMailTemplate(createMailTemplateDtos: List<CreateMailTemplateDto>) {

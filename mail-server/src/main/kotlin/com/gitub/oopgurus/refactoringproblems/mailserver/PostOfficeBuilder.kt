@@ -11,6 +11,7 @@ import org.springframework.util.unit.DataSize
 import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.ScheduledExecutorService
 
 class PostOfficeBuilder(
     private val mailSpamService: MailSpamService,
@@ -19,6 +20,8 @@ class PostOfficeBuilder(
     private val objectMapper: ObjectMapper,
     private val restTemplate: RestTemplate,
     private val javaMailSender: JavaMailSender,
+    private val mailRepository: MailRepository,
+    private val scheduledExecutorService: ScheduledExecutorService,
 ) {
     private var toAddressSupplier: () -> String = { throw IllegalStateException("toAddressSupplier is not set") }
     private var fromAddressSupplier: () -> String = { throw IllegalStateException("fromAddressSupplier is not set") }
@@ -28,6 +31,7 @@ class PostOfficeBuilder(
     private var fromNameSupplier: () -> String = { throw IllegalStateException("fromNameSupplier is not set") }
     private var htmlTemplateParametersSupplier: () -> HtmlTemplateParameters = { throw IllegalStateException("htmlTemplateParametersSupplier is not set") }
     private var fileAttachmentDtoListSupplier: () -> List<FileAttachmentDto> = { throw IllegalStateException("fileAttachmentDtoListSupplier is not set") }
+    private var sendAfterSecondsSupplier: () -> Long? = { throw IllegalStateException("getSendAfterSeconds is not set") }
 
 
     fun toAddress(toAddress: String): PostOfficeBuilder {
@@ -136,8 +140,7 @@ class PostOfficeBuilder(
                 { clientHttpResponse: ClientHttpResponse ->
                     val id = "file-${index}-${java.util.UUID.randomUUID()}"
                     val tempFile = File.createTempFile(id, "")
-                    StreamUtils.copy(clientHttpResponse.body, FileOutputStream(tempFile))
-
+                    clientHttpResponse.body.copyTo(FileOutputStream(tempFile))
                     FileAttachmentDto(
                         resultFile = tempFile,
                         name = attachment.name,
@@ -158,6 +161,14 @@ class PostOfficeBuilder(
         return this
     }
 
+    fun sendAfterSeconds(sendAfterSeconds: Long?): PostOfficeBuilder {
+        if (sendAfterSeconds != null && sendAfterSeconds <= 0) {
+            throw RuntimeException("sendAfterSeconds는 0 이상이어야 합니다")
+        }
+        sendAfterSecondsSupplier = {sendAfterSeconds}
+        return this
+    }
+
     fun build(): PostOffice {
         return PostOffice(
             javaMailSender = javaMailSender,
@@ -169,6 +180,9 @@ class PostOfficeBuilder(
             fileAttachmentDtoListSupplier = fileAttachmentDtoListSupplier,
             htmlTemplateNameSupplier = htmlTemplateNameSupplier,
             htmlTemplateParameters = htmlTemplateParametersSupplier(),
+            mailRepository = mailRepository,
+            sendAfterSecondsSupplier = sendAfterSecondsSupplier,
+            scheduledExecutorService = scheduledExecutorService,
         )
     }
 }
