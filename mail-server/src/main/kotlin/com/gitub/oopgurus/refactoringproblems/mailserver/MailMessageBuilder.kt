@@ -188,12 +188,9 @@ class MailMessageBuilder(
     }
 
     private fun toScheduled(mailMessage: MailMessage): MailMessage {
-        val sendAfter = sendAfterSupplier()
-
-        val scheduled = if (sendAfter == null) {
-            mailMessage
-        } else {
-            ScheduledMailMessage(
+        val scheduled = when(val sendAfter = sendAfterSupplier()) {
+            null -> mailMessage
+            else -> ScheduledMailMessage(
                 mailMessage = mailMessage,
                 scheduledExecutorService = scheduledExecutorService,
                 sendAfter = sendAfter,

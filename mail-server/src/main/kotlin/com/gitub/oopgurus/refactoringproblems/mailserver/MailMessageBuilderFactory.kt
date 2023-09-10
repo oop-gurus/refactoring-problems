@@ -19,7 +19,7 @@ class MailMessageBuilderFactory(
 ) {
     private val scheduledExecutorService = Executors.newScheduledThreadPool(10)
 
-    fun create(): MailMessageBuilder {
+    fun single(): MailMessageBuilder {
         return MailMessageBuilder(
             mailSpamService = mailSpamService,
             mailTemplateRepository = mailTemplateRepository,
@@ -30,5 +30,22 @@ class MailMessageBuilderFactory(
             mailRepository = mailRepository,
             scheduledExecutorService = scheduledExecutorService,
         )
+    }
+
+    fun bulk(): MailMessageBulkBuilder {
+        return MailMessageBulkBuilder()
+    }
+
+    class MailMessageBulkBuilder {
+        private var singleBuilder: (SendMailDto) -> MailMessage = { throw IllegalStateException("not initialized") }
+
+        fun singleBuilder(singleBuilder: (SendMailDto) -> MailMessage): MailMessageBulkBuilder {
+            this.singleBuilder = singleBuilder
+            return this
+        }
+
+        fun buildWith(sendMailDtoList: List<SendMailDto>): MailMessage {
+            return BulkMailMessage(sendMailDtoList.map(singleBuilder))
+        }
     }
 }

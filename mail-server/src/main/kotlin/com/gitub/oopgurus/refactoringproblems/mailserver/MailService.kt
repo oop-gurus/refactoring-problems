@@ -5,29 +5,7 @@ import org.springframework.stereotype.Component
 @Component
 class MailService(
     private val mailTemplateRepository: MailTemplateRepository,
-    private val mailMessageBuilderFactory: MailMessageBuilderFactory
 ) {
-
-    fun send(sendMailDtos: List<SendMailDto>) {
-        sendMailDtos.forEach {
-            sendSingle(it)
-        }
-    }
-
-    private fun sendSingle(sendMailDto: SendMailDto) {
-        val mailMessage = mailMessageBuilderFactory.create()
-            .toAddress(sendMailDto.toAddress)
-            .fromName(sendMailDto.fromName)
-            .fromAddress(sendMailDto.fromAddress)
-            .title(sendMailDto.title)
-            .htmlTemplateName(sendMailDto.htmlTemplateName)
-            .htmlTemplateParameters(sendMailDto.htmlTemplateParameters)
-            .fileAttachments(sendMailDto.fileAttachments)
-            .build()
-
-        mailMessage.send().register()
-    }
-
     fun creatMailTemplate(createMailTemplateDtos: List<CreateMailTemplateDto>) {
         createMailTemplateDtos.forEach {
             if (it.htmlBody.isBlank()) {
