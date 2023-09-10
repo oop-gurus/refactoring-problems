@@ -6,7 +6,7 @@ data class ConfigGetDto(
     val system: SystemDto?,
     val persons: List<PersonDto>?,
 
-    // 모든 key는 소문자로만 이루어져야 함
+    // 모든 key는 대문자로만 이루어져야 함
     // 모든 key는 PROPS_ 으로 시작해야함
     val properties: Map<String, String>?,
 

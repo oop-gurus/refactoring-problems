@@ -17,19 +17,6 @@ spring:
             connectTimeout: 2100
             readTimeout: 5000
             loggerLevel: full
-  mail:
-    host: localhost
-    port: 1025
-    properties:
-      mail:
-        debug: true
-        smtp:
-          connectiontimeout: 5000
-          auth: false
-          starttls:
-            enable: false
-          ssl:
-            enable: false
 app:
   feign-client:
     account:

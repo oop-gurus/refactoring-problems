@@ -49,7 +49,7 @@ class ConfigEditService(
         }
 
 
-        val configEntity = configRepository.findByConfigId(id.toLong())!!
+        val configEntity = configRepository.findById(id.toLong()).get()
         val originProperties = objectMapper.readValue(configEntity.properties, Map::class.java) as Map<String, String>
         val newProperties = configEditDto.properties ?: emptyMap()
         val merged = originProperties + newProperties

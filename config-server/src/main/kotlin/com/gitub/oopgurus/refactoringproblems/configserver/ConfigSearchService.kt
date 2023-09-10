@@ -53,7 +53,7 @@ class ConfigSearchService(
         }
 
 
-        val config = configRepository.findByConfigId(id)!!
+        val config = configRepository.findById(id).get()
         val properties = config.let {
             objectMapper.readValue(it.properties, Map::class.java)
         } as Map<String, String>
