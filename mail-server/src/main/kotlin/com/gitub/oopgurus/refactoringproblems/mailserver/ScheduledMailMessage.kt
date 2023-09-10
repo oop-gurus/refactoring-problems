@@ -10,20 +10,26 @@ class ScheduledMailMessage(
     private val sendAfter: SendAfter?
 ): MailMessage {
     override fun send(): MailSendResult {
-        return if (sendAfter != null) {
-            val delayedExecutor = CompletableFuture.delayedExecutor(
-                sendAfter.amount,
-                sendAfter.unit,
-                scheduledExecutorService
-            )
-            val completionStage: CompletionStage<MailSendResult> = CompletableFuture.supplyAsync(
-                { mailMessage.send() },
-                delayedExecutor
-            )
-
-            MailSendResultAsync(completionStage)
+        return if (sendAfter == null) {
+            sendNow()
         } else {
-            mailMessage.send()
+            sendAsync()
         }
     }
+
+    private fun sendAsync(): MailSendResultAsync {
+        val delayedExecutor = CompletableFuture.delayedExecutor(
+            sendAfter!!.amount,
+            sendAfter.unit,
+            scheduledExecutorService
+        )
+        val completionStage: CompletionStage<MailSendResult> = CompletableFuture.supplyAsync(
+            { mailMessage.send() },
+            delayedExecutor
+        )
+
+        return MailSendResultAsync(completionStage)
+    }
+
+    private fun sendNow() = mailMessage.send()
 }
