@@ -184,21 +184,37 @@ class MailMessageBuilder(
     }
 
     fun build(): MailMessage {
-        val mailSendResultFactory = MailSendResultFactory(
-            mailRepository = mailRepository,
-            mailEntityGet = newMailEntityGet(),
-        )
+        return toScheduled(createdBaseMailMessage())
+    }
 
-        val springJavaMailMessage = SpringJavaMailMessage(
+    private fun toScheduled(mailMessage: MailMessage): MailMessage {
+        val sendAfter = sendAfterSupplier()
+
+        val scheduled = if (sendAfter == null) {
+            mailMessage
+        } else {
+            ScheduledMailMessage(
+                mailMessage = mailMessage,
+                scheduledExecutorService = scheduledExecutorService,
+                sendAfter = sendAfter,
+            )
+        }
+
+        return scheduled
+    }
+
+    private fun createdBaseMailMessage(): MailMessage {
+        return SpringJavaMailMessage(
             mimeMessage = newMimeMessage(),
             javaMailSender = javaMailSender,
-            mailSendResultFactory = mailSendResultFactory,
+            mailSendResultFactory = newMailSendResultFactory(),
         )
+    }
 
-        return ScheduledMailMessage(
-            mailMessage = springJavaMailMessage,
-            scheduledExecutorService = scheduledExecutorService,
-            sendAfter = sendAfterSupplier(),
+    private fun newMailSendResultFactory(): MailSendResultFactory {
+        return MailSendResultFactory(
+            mailRepository = mailRepository,
+            mailEntityGet = newMailEntityGet()
         )
     }
 
