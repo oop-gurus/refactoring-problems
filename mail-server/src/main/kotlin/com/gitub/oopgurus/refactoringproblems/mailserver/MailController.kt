@@ -16,8 +16,13 @@ class MailController(
         produces = ["application/json"]
     )
     fun sendMail(@RequestBody sendMailDtoList: List<SendMailDto>): ResponseEntity<Any> {
-        val mailMessage = mailMessageBuilderFactory.bulk().singleBuilder { singleBuilder(it) }.buildWith(sendMailDtoList)
-        mailMessage.send().register()
+        mailMessageBuilderFactory
+            .bulk()
+            .singleBuilder { singleBuilder(it) }
+            .buildWith(sendMailDtoList)
+            .send()
+            .register()
+
         return ResponseEntity.ok().build()
     }
 
