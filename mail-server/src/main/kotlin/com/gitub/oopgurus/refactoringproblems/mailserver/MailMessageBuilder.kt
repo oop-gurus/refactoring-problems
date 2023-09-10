@@ -184,11 +184,15 @@ class MailMessageBuilder(
     }
 
     fun build(): MailMessage {
+        val mailSendResultFactory = MailSendResultFactory(
+            mailRepository = mailRepository,
+            mailEntityGet = newMailEntityGet(),
+        )
+
         val springJavaMailMessage = SpringJavaMailMessage(
             mimeMessage = newMimeMessage(),
-            mailEntityGet = newMailEntityGet(),
             javaMailSender = javaMailSender,
-            mailRepository = mailRepository,
+            mailSendResultFactory = mailSendResultFactory,
         )
 
         return ScheduledMailMessage(

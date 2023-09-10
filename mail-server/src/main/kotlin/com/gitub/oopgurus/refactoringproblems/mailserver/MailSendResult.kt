@@ -9,25 +9,25 @@ interface MailSendResult {
 
 class MailSendResultSuccess(
     private val mailRepository: MailRepository,
-    private val mailEntityGet: (isSuccess: Boolean) -> MailEntity,
+    private val mailEntity: MailEntity,
 ) : MailSendResult {
     private val log = KotlinLogging.logger {}
 
     override fun register() {
-        mailRepository.save(mailEntityGet(true))
+        mailRepository.save(mailEntity)
         log.info { "MailServiceImpl.sendMail() :: SUCCESS" }
     }
 }
 
 class MailSendResultFailed(
     private val mailRepository: MailRepository,
-    private val mailEntityGet: (isSuccess: Boolean) -> MailEntity,
+    private val mailEntity: MailEntity,
     private val exception: Exception,
 ) : MailSendResult {
     private val log = KotlinLogging.logger {}
 
     override fun register() {
-        mailRepository.save(mailEntityGet(false))
+        mailRepository.save(mailEntity)
         log.error(exception) { "MailServiceImpl.sendMail() :: FAILED" }
     }
 }
