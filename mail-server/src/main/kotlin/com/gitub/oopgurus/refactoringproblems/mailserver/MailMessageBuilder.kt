@@ -17,7 +17,7 @@ import java.io.FileOutputStream
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-class PostOfficeBuilder(
+class MailMessageBuilder(
     private val mailSpamService: MailSpamService,
     private val mailTemplateRepository: MailTemplateRepository,
     private val handlebars: Handlebars,
@@ -38,7 +38,7 @@ class PostOfficeBuilder(
     private var sendAfterSupplier: () -> SendAfter? = { throw IllegalStateException("sendAfterSupplier is not set") }
 
 
-    fun toAddress(toAddress: String): PostOfficeBuilder {
+    fun toAddress(toAddress: String): MailMessageBuilder {
         toAddressSupplier = when {
             mailSpamService.needBlockByDomainName(toAddress) -> {
                 { throw RuntimeException("도메인 차단") }
@@ -59,7 +59,7 @@ class PostOfficeBuilder(
         return this
     }
 
-    fun fromAddress(fromAddress: String): PostOfficeBuilder {
+    fun fromAddress(fromAddress: String): MailMessageBuilder {
         fromAddressSupplier = when {
             Regex(".+@.*\\..+").matches(fromAddress).not() -> {
                 { throw RuntimeException("이메일 형식 오류") }
@@ -72,7 +72,7 @@ class PostOfficeBuilder(
         return this
     }
 
-    fun htmlTemplateName(htmlTemplateName: String): PostOfficeBuilder {
+    fun htmlTemplateName(htmlTemplateName: String): MailMessageBuilder {
         htmlTemplateNameSupplier = when {
             htmlTemplateName.isBlank() -> {
                 { throw RuntimeException("템플릿 이름이 비어있습니다") }
@@ -98,7 +98,7 @@ class PostOfficeBuilder(
     }
 
 
-    fun title(title: String): PostOfficeBuilder {
+    fun title(title: String): MailMessageBuilder {
         titleSupplier = when {
             title.isBlank() -> {
                 { throw RuntimeException("제목이 비어있습니다") }
@@ -112,7 +112,7 @@ class PostOfficeBuilder(
     }
 
 
-    fun fromName(fromName: String): PostOfficeBuilder {
+    fun fromName(fromName: String): MailMessageBuilder {
         fromNameSupplier = when {
             fromName.isBlank() -> {
                 { throw RuntimeException("이름이 비어있습니다") }
@@ -125,7 +125,7 @@ class PostOfficeBuilder(
         return this
     }
 
-    fun htmlTemplateParameters(htmlTemplateParameters: Map<String, Any>): PostOfficeBuilder {
+    fun htmlTemplateParameters(htmlTemplateParameters: Map<String, Any>): MailMessageBuilder {
         htmlTemplateParametersSupplier = {
             HtmlTemplateParameters(
                 parameters = htmlTemplateParameters,
@@ -135,7 +135,7 @@ class PostOfficeBuilder(
         return this
     }
 
-    fun fileAttachments(fileAttachments: List<FileAttachment>): PostOfficeBuilder {
+    fun fileAttachments(fileAttachments: List<FileAttachment>): MailMessageBuilder {
         val fileAttachmentDtoList = fileAttachments.mapIndexed { index, attachment ->
             val fileAttachmentDto = restTemplate.execute(
                 attachment.url,
@@ -165,7 +165,7 @@ class PostOfficeBuilder(
         return this
     }
 
-    fun sendAfterSeconds(sendAfterSeconds: Long?): PostOfficeBuilder {
+    fun sendAfterSeconds(sendAfterSeconds: Long?): MailMessageBuilder {
         if (sendAfterSeconds == null) {
             sendAfterSupplier = { null }
             return this
@@ -183,15 +183,18 @@ class PostOfficeBuilder(
         return this
     }
 
-    fun build(): PostOffice {
-        return PostOffice(
-            javaMailSender = javaMailSender,
-
-            mailRepository = mailRepository,
-            sendAfterSupplier = sendAfterSupplier,
-            scheduledExecutorService = scheduledExecutorService,
+    fun build(): MailMessage {
+        val springJavaMailMessage = SpringJavaMailMessage(
             mimeMessage = newMimeMessage(),
             mailEntityGet = newMailEntityGet(),
+            javaMailSender = javaMailSender,
+            mailRepository = mailRepository,
+        )
+
+        return ScheduledMailMessage(
+            mailMessage = springJavaMailMessage,
+            scheduledExecutorService = scheduledExecutorService,
+            sendAfter = sendAfterSupplier(),
         )
     }
 
