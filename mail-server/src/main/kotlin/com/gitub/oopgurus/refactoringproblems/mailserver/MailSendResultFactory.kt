@@ -5,17 +5,30 @@ class MailSendResultFactory(
     private val mailEntityGet: (isSuccess: Boolean) -> MailEntity
 ) {
     fun success(): MailSendResult {
-        return MailSendResultSuccess(
+        val success =  MailSendResultSuccess(
             mailRepository = mailRepository,
             mailEntity = mailEntityGet(true),
         )
+
+        val logging = LoggingMailSendResult(
+            mailSendResult = success,
+            writeLogTo = { it.info { "MailSendResult :: SUCCESS" } },
+        )
+
+        return logging
     }
 
     fun failed(exception: Exception): MailSendResult {
-        return MailSendResultFailed(
+        val failed = MailSendResultFailed(
             mailRepository = mailRepository,
             mailEntity = mailEntityGet(false),
-            exception = exception,
         )
+
+        val logging = LoggingMailSendResult(
+            mailSendResult = failed,
+            writeLogTo = { it.error(exception) { "MailSendResult :: FAILED" } },
+        )
+
+        return logging
     }
 }
