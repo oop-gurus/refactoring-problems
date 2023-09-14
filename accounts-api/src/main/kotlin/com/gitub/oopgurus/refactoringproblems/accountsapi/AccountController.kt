@@ -14,7 +14,7 @@ class AccountController(
     val accountService: AccountService,
 ) {
     @PostMapping("/v1/accounts")
-    fun createAccount(): ResponseEntity<Account> {
+    fun createAccount(): ResponseEntity<AccountData> {
         val account = accountService.createAccount()
         return ResponseEntity.ok(account)
     }
@@ -22,7 +22,7 @@ class AccountController(
     @GetMapping("/v1/accounts/{accountId}")
     fun getAccount(
         @PathVariable accountId: Long,
-    ): ResponseEntity<Account> {
+    ): ResponseEntity<AccountData> {
         val account = accountService.getAccount(accountId)
         return ResponseEntity.ok(account)
     }

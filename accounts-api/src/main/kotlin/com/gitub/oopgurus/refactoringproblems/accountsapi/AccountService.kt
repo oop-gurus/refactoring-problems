@@ -13,7 +13,7 @@ class AccountService(
     private val log = KotlinLogging.logger {}
 
     @Transactional
-    fun createAccount(): Account {
+    fun createAccount(): AccountData {
         val accountEntity = accountRepository.save(
             AccountEntity(
                 isVerified = false,
@@ -23,7 +23,7 @@ class AccountService(
             )
         )
 
-        return Account(
+        return AccountData(
             accountId = accountEntity.id,
             isVerified = accountEntity.isVerified,
             isClosed = accountEntity.isClosed,
@@ -33,11 +33,11 @@ class AccountService(
     }
 
     @Transactional
-    fun getAccount(accountId: Long): Account {
+    fun getAccount(accountId: Long): AccountData {
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        return Account(
+        return AccountData(
             accountId = accountId,
             isVerified = accountEntity.isVerified,
             isClosed = accountEntity.isClosed,
@@ -67,21 +67,22 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        if (!accountEntity.isVerified) {
-            log.info { "확인되지 않은 계좌는 동결할 수 없습니다. 요청을 무시합니다." }
-            return
+        val frozenAction = when(accountEntity.isFrozen) {
+            true -> DoNothing2()
+            false -> NotifyFreeze(accountNotificationApi)
         }
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 동결할 수 없습니다. 요청을 무시합니다." }
-            return
+        val unfrozenAction = when (accountEntity.isFrozen) {
+            true -> NotifyUnfreeze(accountNotificationApi)
+            false -> DoNothing()
         }
-        accountEntity.isFrozen = true
-        accountNotificationApi.notifyChangedToFrozen(
-            AccountFrozenChangedRequest(
-                accountId = accountId,
-                isFrozen = true,
-            ),
+
+        val account = Account(
+            accountEntity = accountEntity,
+            frozenAction = frozenAction,
+            unfrozenAction = unfrozenAction,
         )
+
+        account.freeze()
     }
 
     @Transactional
@@ -89,49 +90,43 @@ class AccountService(
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 입금할 수 없습니다. 요청을 무시합니다." }
-            return
+        val frozenAction = when (accountEntity.isFrozen) {
+            true -> DoNothing2()
+            false -> NotifyFreeze(accountNotificationApi)
         }
-        if (accountEntity.isFrozen) {
-            accountEntity.isFrozen = false
-            accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountId,
-                    isFrozen = false,
-                ),
-            )
+        val unfrozenAction = when (accountEntity.isFrozen) {
+            true -> NotifyUnfreeze(accountNotificationApi)
+            false -> DoNothing()
         }
-        accountEntity.balance = accountEntity.balance.add(amount)
+
+        val account = Account(
+            accountEntity = accountEntity,
+            frozenAction = frozenAction,
+            unfrozenAction = unfrozenAction,
+        )
+        account.deposit(amount)
     }
+
 
     @Transactional
     fun withdraw(accountId: Long, amount: BigDecimal) {
         val accountEntity = accountRepository.findById(accountId)
             .orElseThrow { throw RuntimeException("Account not found") }
 
-        if (!accountEntity.isVerified) {
-            log.info { "확인되지 않은 계좌는 출금할 수 없습니다. 요청을 무시합니다." }
-            return
+        val frozenAction = when (accountEntity.isFrozen) {
+            true -> DoNothing2()
+            false -> NotifyFreeze(accountNotificationApi)
         }
-        if (accountEntity.isClosed) {
-            log.info { "계좌가 이미 닫혀있습니다. 출금할 수 없습니다. 요청을 무시합니다." }
-            return
+        val unfrozenAction = when (accountEntity.isFrozen) {
+            true -> NotifyUnfreeze(accountNotificationApi)
+            false -> DoNothing()
         }
-        if (accountEntity.isFrozen) {
-            accountEntity.isFrozen = false
-            accountNotificationApi.notifyChangedToFrozen(
-                AccountFrozenChangedRequest(
-                    accountId = accountId,
-                    isFrozen = false,
-                ),
-            )
-        }
-        val subtracted = accountEntity.balance.subtract(amount)
-        if (subtracted < BigDecimal.ZERO) {
-            log.info { "잔액이 부족합니다. 출금할 수 없습니다." }
-            throw IllegalArgumentException("잔액이 부족합니다. 출금할 수 없습니다.")
-        }
-        accountEntity.balance = subtracted
+
+        val account = Account(
+            accountEntity = accountEntity,
+            frozenAction = frozenAction,
+            unfrozenAction = unfrozenAction,
+        )
+        account.withdraw(amount)
     }
 }
