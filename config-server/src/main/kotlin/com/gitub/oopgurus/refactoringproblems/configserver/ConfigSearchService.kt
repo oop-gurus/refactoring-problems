@@ -19,14 +19,10 @@ class ConfigSearchService(
             builder.result()
         }
         val system = systemRepository.findByConfigId(id)?.let {
-            SystemDto(
-                id = it.id!!,
-                on = it.on!!,
-                off = !it.on!!,
-                notes = it.notes!!,
-            )
+            val builder = SystemDtoBuilder()
+            System(it).okay_i_will_give_you_what_you_want(builder)
+            builder.build()
         }
-
 
         val config = configRepository.findById(id).get()
         val properties = Properties.parse(config.properties)
