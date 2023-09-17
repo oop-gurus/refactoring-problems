@@ -32,8 +32,6 @@ class ConfigSearchService(
         val properties = Properties.parse(config.properties)
 
         val whatIWantBoth = WhatIWantBoth()
-        val whatIWantBoth2 = WhatIWantOnlyDescriptions()
-        val whatIWantBoth3 = WhatIWantOnlyProperties()
         properties.okay_i_will_give_you_what_you_want(whatIWantBoth)
 
         // 문제3: 결국 이걸 원하는 건데...
