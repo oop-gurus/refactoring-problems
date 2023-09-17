@@ -4,21 +4,15 @@ class Person(
     private val entity: PersonEntity,
 ) {
 
-    fun okay_i_will_give_you_what_you_want(personDtoBuilder: PersonDtoBuilder) {
-        personDtoBuilder.name(name())
-        personDtoBuilder.firstName(firstName())
-        personDtoBuilder.lastName(lastName())
-        personDtoBuilder.email(email())
-        personDtoBuilder.phone(phone())
-        personDtoBuilder.isKorean(isKorean())
-        personDtoBuilder.isMobilePhone(isMobilePhone())
-        personDtoBuilder.isOfficePhone(isOfficePhone())
-
-        // 문제점1: 아래 메서드가 호출 가능함
-        // personDtoBuilder.result()
-
-        // 문제점2: PersonDtoBuilder는 PersonDto 에 대해서 알고 있는데...
-        // 내가 그냥 만드는거랑 뭐가 달라?
+    fun okay_i_will_give_you_what_you_want(whatIWantToPerson: WhatIWantToPerson) {
+        whatIWantToPerson.name(name())
+        whatIWantToPerson.firstName(firstName())
+        whatIWantToPerson.lastName(lastName())
+        whatIWantToPerson.email(email())
+        whatIWantToPerson.phone(phone())
+        whatIWantToPerson.isKorean(isKorean())
+        whatIWantToPerson.isMobilePhone(isMobilePhone())
+        whatIWantToPerson.isOfficePhone(isOfficePhone())
     }
 
     private fun name(): String {
@@ -58,7 +52,25 @@ class Person(
     }
 }
 
-class PersonDtoBuilder {
+interface WhatIWantToPerson {
+    fun name(name: String)
+
+    fun firstName(firstName: String)
+
+    fun lastName(lastName: String)
+
+    fun email(email: String)
+
+    fun phone(phone: String)
+
+    fun isKorean(isKorean: Boolean)
+
+    fun isMobilePhone(isMobilePhone: Boolean)
+
+    fun isOfficePhone(isOfficePhone: Boolean)
+}
+
+class PersonDtoBuilder: WhatIWantToPerson {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var nameGet: () -> String = { throw IllegalStateException() }
     private var firstNameGet: () -> String = { throw IllegalStateException() }
@@ -70,36 +82,36 @@ class PersonDtoBuilder {
     private var isMobilePhoneGet: () -> Boolean = { throw IllegalStateException() }
     private var isOfficePhoneGet: () -> Boolean = { throw IllegalStateException() }
 
-    fun name(name: String) {
+    override fun name(name: String) {
         nameGet = { name }
     }
 
-    fun firstName(firstName: String) {
+    override fun firstName(firstName: String) {
         firstNameGet = { firstName }
     }
 
-    fun lastName(lastName: String) {
+    override fun lastName(lastName: String) {
         lastNameGet = { lastName }
     }
 
-    fun email(email: String) {
+    override fun email(email: String) {
         emailGet = { email }
     }
 
-    fun phone(phone: String) {
+    override fun phone(phone: String) {
         phoneGet = { phone }
     }
 
-    fun isKorean(isKorean: Boolean) {
+    override fun isKorean(isKorean: Boolean) {
         isKoreanGet = { isKorean }
         isForeignerGet = { !isKorean }
     }
 
-    fun isMobilePhone(isMobilePhone: Boolean) {
+    override fun isMobilePhone(isMobilePhone: Boolean) {
         isMobilePhoneGet = { isMobilePhone }
     }
 
-    fun isOfficePhone(isOfficePhone: Boolean) {
+    override fun isOfficePhone(isOfficePhone: Boolean) {
         isOfficePhoneGet = { isOfficePhone }
     }
 
