@@ -54,17 +54,15 @@ class ConfigSearchService(
 
 
         val config = configRepository.findById(id).get()
-        val properties = config.let {
-            objectMapper.readValue(it.properties, Map::class.java)
-        } as Map<String, String>
+        val properties = Properties.parse(config.properties)
 
         return ConfigGetDto(
             id = config.id!!,
             isValidSystem = system != null,
             system = system,
             persons = persons,
-            properties = properties,
-            descriptions = properties.filterKeys { it.startsWith("PROPS_DESCRIPTION_") }.values.toList(),
+            properties = properties.holder, // 내부 구현을 외부로 노출하고 있음
+            descriptions = properties.descriptions(),
         )
     }
 
