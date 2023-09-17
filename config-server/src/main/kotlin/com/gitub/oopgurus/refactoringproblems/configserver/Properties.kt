@@ -21,9 +21,21 @@ class Properties(
     // 문제점2: 이제는 외부에서 달라고하는거 Properties(내부)가 어떤 정보를 주는지 결정하긴 하는데,
     //   What_I_Want 이거 좀 어떻게 안되나...? 매번 이런식으로 해야하나?
     //   -> 역시 우리의 해결책은 항상 객체다
-    fun okay_i_will_give_you_what_you_want(whatIWant: WhatIWant) {
-        whatIWant.setDescriptions(descriptions())
-        whatIWant.setProperties(holder)
+    fun okay_i_will_give_you_what_you_want(whatIWantBoth: WhatIWantBoth) {
+        whatIWantBoth.setDescriptions(descriptions())
+        whatIWantBoth.setProperties(holder)
+    }
+
+    // parameter type을 보고 어떤 정보가 필요한지 내가 신경 쓰는게 맞을까?
+    // -> 중복코드, 암시적 결함, 불필요한 의존성, 수많은 클래스, ...
+    fun okay_i_will_give_you_what_you_want(whatIWantOnlyDescriptions: WhatIWantOnlyDescriptions) {
+        whatIWantOnlyDescriptions.setDescriptions(descriptions())
+        whatIWantOnlyDescriptions.setProperties(holder)
+    }
+
+    fun okay_i_will_give_you_what_you_want(whatIWantOnlyProperties: WhatIWantOnlyProperties) {
+        whatIWantOnlyProperties.setDescriptions(descriptions())
+        whatIWantOnlyProperties.setProperties(holder)
     }
 
     private fun descriptions(): List<String> {

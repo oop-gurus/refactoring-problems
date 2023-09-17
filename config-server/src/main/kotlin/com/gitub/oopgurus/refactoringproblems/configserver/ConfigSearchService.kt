@@ -57,15 +57,17 @@ class ConfigSearchService(
         val properties = Properties.parse(config.properties)
 
         // description 만 필요하면 어떡하지?
-        val whatIWant = WhatIWant()
-        properties.okay_i_will_give_you_what_you_want(whatIWant)
+        val whatIWantBoth = WhatIWantBoth()
+        val whatIWantBoth2 = WhatIWantOnlyDescriptions()
+        val whatIWantBoth3 = WhatIWantOnlyProperties()
+        properties.okay_i_will_give_you_what_you_want(whatIWantBoth)
         return ConfigGetDto(
             id = config.id!!,
             isValidSystem = system != null,
             system = system,
             persons = persons,
-            properties = whatIWant.getProperties(),
-            descriptions = whatIWant.getDescriptions(),
+            properties = whatIWantBoth.getProperties(),
+            descriptions = whatIWantBoth.getDescriptions(),
         )
     }
 
