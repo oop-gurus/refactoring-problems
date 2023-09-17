@@ -56,14 +56,15 @@ class ConfigSearchService(
         val config = configRepository.findById(id).get()
         val properties = Properties.parse(config.properties)
 
-        val output = properties.okay_i_will_give_you_what_you_want(What_I_Want.BOTH)
+        val whatIWant = What_I_Want()
+        properties.okay_i_will_give_you_what_you_want(whatIWant)
         return ConfigGetDto(
             id = config.id!!,
             isValidSystem = system != null,
             system = system,
             persons = persons,
-            properties = output[What_I_Want.PROPERTIES] as Map<String, String>,
-            descriptions = output[What_I_Want.DESCRIPTIONS] as List<String>,
+            properties = whatIWant.getProperties(),
+            descriptions = whatIWant.getDescriptions(),
         )
     }
 

@@ -20,17 +20,10 @@ class Properties(
     //   -> 일단 map으로 표현하면 좀 낫다
     // 문제점2: 이제는 외부에서 달라고하는거 Properties(내부)가 어떤 정보를 주는지 결정하긴 하는데,
     //   What_I_Want 이거 좀 어떻게 안되나...? 매번 이런식으로 해야하나?
-    fun okay_i_will_give_you_what_you_want(whatIWant: What_I_Want): Map<What_I_Want, Any> {
-        val output = mutableMapOf<What_I_Want, Any>()
-        when (whatIWant) {
-            What_I_Want.DESCRIPTIONS -> output[What_I_Want.DESCRIPTIONS] = descriptions()
-            What_I_Want.PROPERTIES -> output[What_I_Want.PROPERTIES] = holder
-            What_I_Want.BOTH -> {
-                output[What_I_Want.DESCRIPTIONS] = descriptions()
-                output[What_I_Want.PROPERTIES] = holder
-            }
-        }
-        return output
+    //   -> 역시 우리의 해결책은 항상 객체다
+    fun okay_i_will_give_you_what_you_want(whatIWant: What_I_Want) {
+        whatIWant.setDescriptions(descriptions())
+        whatIWant.setProperties(holder)
     }
 
     private fun descriptions(): List<String> {
@@ -41,8 +34,20 @@ class Properties(
     }
 }
 
-enum class What_I_Want {
-    DESCRIPTIONS,
-    PROPERTIES,
-    BOTH,
+class What_I_Want {
+    fun getDescriptions(): List<String> {
+        TODO()
+    }
+
+    fun setDescriptions(descriptions: List<String>) {
+        TODO()
+    }
+
+    fun getProperties(): Map<String, String> {
+        TODO()
+    }
+
+    fun setProperties(properties: Map<String, String>) {
+        TODO()
+    }
 }
