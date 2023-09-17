@@ -62,7 +62,7 @@ class ConfigSearchService(
             system = system,
             persons = persons,
             properties = properties.holder, // 내부 구현을 외부로 노출하고 있음
-            descriptions = properties.descriptions(),
+            descriptions = properties.descriptions(), // 진짜 필요한 메서드인가?
         )
     }
 
