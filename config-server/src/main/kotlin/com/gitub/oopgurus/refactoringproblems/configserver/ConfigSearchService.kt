@@ -56,13 +56,14 @@ class ConfigSearchService(
         val config = configRepository.findById(id).get()
         val properties = Properties.parse(config.properties)
 
+        val (map, descriptions) = properties.okay_i_will_give_you_what_you_want(What_I_Want.BOTH) as Pair<Map<String, String>, List<String>>
         return ConfigGetDto(
             id = config.id!!,
             isValidSystem = system != null,
             system = system,
             persons = persons,
-            properties = properties.holder, // 내부 구현을 외부로 노출하고 있음
-            descriptions = properties.descriptions(), // 진짜 필요한 메서드인가?
+            properties = map,
+            descriptions = descriptions
         )
     }
 
