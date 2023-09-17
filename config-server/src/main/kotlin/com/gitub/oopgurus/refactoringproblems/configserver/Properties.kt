@@ -21,7 +21,7 @@ class Properties(
     // 문제점2: 이제는 외부에서 달라고하는거 Properties(내부)가 어떤 정보를 주는지 결정하긴 하는데,
     //   What_I_Want 이거 좀 어떻게 안되나...? 매번 이런식으로 해야하나?
     //   -> 역시 우리의 해결책은 항상 객체다
-    fun okay_i_will_give_you_what_you_want(whatIWant: What_I_Want) {
+    fun okay_i_will_give_you_what_you_want(whatIWant: WhatIWant) {
         whatIWant.setDescriptions(descriptions())
         whatIWant.setProperties(holder)
     }
@@ -34,23 +34,3 @@ class Properties(
     }
 }
 
-class What_I_Want {
-    private var descriptionsGet: () -> List<String> = { throw IllegalStateException("descriptions 설정이 안되어있음") }
-    private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException("properties 설정이 안되어있음") }
-
-    fun getDescriptions(): List<String> {
-        return descriptionsGet()
-    }
-
-    fun setDescriptions(descriptions: List<String>) {
-        descriptionsGet = { descriptions }
-    }
-
-    fun getProperties(): Map<String, String> {
-        return propertiesGet()
-    }
-
-    fun setProperties(properties: Map<String, String>) {
-        propertiesGet = { properties }
-    }
-}

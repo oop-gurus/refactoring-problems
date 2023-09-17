@@ -56,7 +56,7 @@ class ConfigSearchService(
         val config = configRepository.findById(id).get()
         val properties = Properties.parse(config.properties)
 
-        val whatIWant = What_I_Want()
+        val whatIWant = WhatIWant()
         properties.okay_i_will_give_you_what_you_want(whatIWant)
         return ConfigGetDto(
             id = config.id!!,
