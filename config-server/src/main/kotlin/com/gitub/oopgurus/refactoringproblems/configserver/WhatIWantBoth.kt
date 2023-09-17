@@ -1,9 +1,9 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
 interface WhatIWant {
-    fun setDescriptions(descriptions: List<String>)
+    fun descriptions(descriptions: List<String>)
 
-    fun setProperties(properties: Map<String, String>)
+    fun properties(properties: Map<String, String>)
 }
 
 class WhatIWantBoth: WhatIWant {
@@ -14,7 +14,7 @@ class WhatIWantBoth: WhatIWant {
         return descriptionsGet()
     }
 
-    override fun setDescriptions(descriptions: List<String>) {
+    override fun descriptions(descriptions: List<String>) {
         descriptionsGet = { descriptions }
     }
 
@@ -22,7 +22,7 @@ class WhatIWantBoth: WhatIWant {
         return propertiesGet()
     }
 
-    override fun setProperties(properties: Map<String, String>) {
+    override fun properties(properties: Map<String, String>) {
         propertiesGet = { properties }
     }
 }
@@ -34,11 +34,11 @@ class WhatIWantOnlyDescriptions : WhatIWant {
         return descriptionsGet()
     }
 
-    override fun setDescriptions(descriptions: List<String>) {
+    override fun descriptions(descriptions: List<String>) {
         descriptionsGet = { descriptions }
     }
 
-    override fun setProperties(properties: Map<String, String>) {
+    override fun properties(properties: Map<String, String>) {
         // 실제로는 필요 없으므로 아무것도 안 하면 됨
         // do nothing
     }
@@ -47,7 +47,7 @@ class WhatIWantOnlyDescriptions : WhatIWant {
 class WhatIWantOnlyProperties: WhatIWant {
     private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException("properties 설정이 안되어있음") }
 
-    override fun setDescriptions(descriptions: List<String>) {
+    override fun descriptions(descriptions: List<String>) {
         // 실제로는 필요 없으므로 아무것도 안 하면 됨
         // do nothing
     }
@@ -58,7 +58,7 @@ class WhatIWantOnlyProperties: WhatIWant {
     }
 
     // 필요함
-    override fun setProperties(properties: Map<String, String>) {
+    override fun properties(properties: Map<String, String>) {
         propertiesGet = { properties }
     }
 }
