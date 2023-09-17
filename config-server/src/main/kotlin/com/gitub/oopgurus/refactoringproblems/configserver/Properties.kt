@@ -35,19 +35,22 @@ class Properties(
 }
 
 class What_I_Want {
+    private var descriptionsGet: () -> List<String> = { throw IllegalStateException("descriptions 설정이 안되어있음") }
+    private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException("properties 설정이 안되어있음") }
+
     fun getDescriptions(): List<String> {
-        TODO()
+        return descriptionsGet()
     }
 
     fun setDescriptions(descriptions: List<String>) {
-        TODO()
+        descriptionsGet = { descriptions }
     }
 
     fun getProperties(): Map<String, String> {
-        TODO()
+        return propertiesGet()
     }
 
     fun setProperties(properties: Map<String, String>) {
-        TODO()
+        propertiesGet = { properties }
     }
 }
