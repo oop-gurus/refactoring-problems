@@ -1,6 +1,12 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-class WhatIWantBoth {
+interface WhatIWant {
+    fun setDescriptions(descriptions: List<String>)
+
+    fun setProperties(properties: Map<String, String>)
+}
+
+class WhatIWantBoth: WhatIWant {
     private var descriptionsGet: () -> List<String> = { throw IllegalStateException("descriptions 설정이 안되어있음") }
     private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException("properties 설정이 안되어있음") }
 
@@ -8,7 +14,7 @@ class WhatIWantBoth {
         return descriptionsGet()
     }
 
-    fun setDescriptions(descriptions: List<String>) {
+    override fun setDescriptions(descriptions: List<String>) {
         descriptionsGet = { descriptions }
     }
 
@@ -16,55 +22,43 @@ class WhatIWantBoth {
         return propertiesGet()
     }
 
-    fun setProperties(properties: Map<String, String>) {
+    override fun setProperties(properties: Map<String, String>) {
         propertiesGet = { properties }
     }
 }
 
-class WhatIWantOnlyDescriptions {
+class WhatIWantOnlyDescriptions : WhatIWant {
     private var descriptionsGet: () -> List<String> = { throw IllegalStateException("descriptions 설정이 안되어있음") }
 
-    // 이건 ConfigSearchService에서 필요한 것
     fun getDescriptions(): List<String> {
         return descriptionsGet()
     }
 
-    // 필요함
-    fun setDescriptions(descriptions: List<String>) {
+    override fun setDescriptions(descriptions: List<String>) {
         descriptionsGet = { descriptions }
     }
 
-    // 이건 ConfigSearchService에서 필요 없는 것
-    fun getProperties(): Map<String, String> {
-        TODO()
-    }
-
-    // 이건 실제로는 필요 없지만, Properties 입장에서는 필요한지 아닌지 알 수가 없음
-    fun setProperties(properties: Map<String, String>) {
-        TODO()
+    override fun setProperties(properties: Map<String, String>) {
+        // 실제로는 필요 없으므로 아무것도 안 하면 됨
+        // do nothing
     }
 }
 
-class WhatIWantOnlyProperties {
+class WhatIWantOnlyProperties: WhatIWant {
     private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException("properties 설정이 안되어있음") }
 
-    // 이건 ConfigSearchService에서 필요 없는 것
-    fun getDescriptions(): List<String> {
-        TODO()
-    }
-
-    // 이건 실제로는 필요 없지만, Properties 입장에서는 필요한지 아닌지 알 수가 없음
-    fun setDescriptions(descriptions: List<String>) {
-        TODO()
+    override fun setDescriptions(descriptions: List<String>) {
+        // 실제로는 필요 없으므로 아무것도 안 하면 됨
+        // do nothing
     }
 
     // 이건 ConfigSearchService에서 필요한 것
     fun getProperties(): Map<String, String> {
-        TODO()
+        return propertiesGet()
     }
 
     // 필요함
-    fun setProperties(properties: Map<String, String>) {
+    override fun setProperties(properties: Map<String, String>) {
         propertiesGet = { properties }
     }
 }
