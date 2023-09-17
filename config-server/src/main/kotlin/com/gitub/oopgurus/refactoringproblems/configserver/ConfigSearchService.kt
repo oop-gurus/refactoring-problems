@@ -35,6 +35,9 @@ class ConfigSearchService(
         val whatIWantBoth2 = WhatIWantOnlyDescriptions()
         val whatIWantBoth3 = WhatIWantOnlyProperties()
         properties.okay_i_will_give_you_what_you_want(whatIWantBoth)
+
+        // 문제3: 결국 이걸 원하는 건데...
+        //   PersonDtoBuilder 같은 방식으로 ConfigGetDto가 나오면 안되려나...
         return ConfigGetDto(
             id = config.id!!,
             isValidSystem = system != null,

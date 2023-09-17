@@ -13,6 +13,12 @@ class Person(
         personDtoBuilder.isKorean(isKorean())
         personDtoBuilder.isMobilePhone(isMobilePhone())
         personDtoBuilder.isOfficePhone(isOfficePhone())
+
+        // 문제점1: 아래 메서드가 호출 가능함
+        // personDtoBuilder.result()
+
+        // 문제점2: PersonDtoBuilder는 PersonDto 에 대해서 알고 있는데...
+        // 내가 그냥 만드는거랑 뭐가 달라?
     }
 
     private fun name(): String {
