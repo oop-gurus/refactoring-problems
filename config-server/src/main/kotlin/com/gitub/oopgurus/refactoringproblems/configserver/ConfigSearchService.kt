@@ -56,6 +56,7 @@ class ConfigSearchService(
         val config = configRepository.findById(id).get()
         val properties = Properties.parse(config.properties)
 
+        // description 만 필요하면 어떡하지?
         val whatIWant = WhatIWant()
         properties.okay_i_will_give_you_what_you_want(whatIWant)
         return ConfigGetDto(
