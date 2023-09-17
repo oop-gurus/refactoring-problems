@@ -26,6 +26,8 @@ class ConfigSearchService(
             // check firstname has alphabet
             val isKorean = it.firstName!!.matches(Regex("[가-힣]+"))
 
+            // 이건 매번 꺼내서 작업하기 너무 귀찮은데...
+            // 그냥 whatIWant.result() -> 이러면 PersonDto가 나오면 안되나?
             PersonDto(
                 id = it.id!!,
                 name = if (isKorean) {
