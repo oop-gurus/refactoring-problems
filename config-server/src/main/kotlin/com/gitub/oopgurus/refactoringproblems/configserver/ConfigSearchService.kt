@@ -14,57 +14,31 @@ class ConfigSearchService(
 
     fun getConfig(id: Long): ConfigGetDto {
         val persons = personRepository.findAllByConfigId(id).map {
-            var isMobilePhone = false
-            var isOfficePhone = false
-            if (it.phone!!.startsWith("010")) {
-                isMobilePhone = true
-            }
-            if (it.phone!!.startsWith("02")) {
-                isOfficePhone = true
-            }
-
-            // check firstname has alphabet
-            val isKorean = it.firstName!!.matches(Regex("[가-힣]+"))
-
-            PersonDto(
-                id = it.id!!,
-                name = if (isKorean) {
-                    "${it.firstName}${it.lastName}"
-                } else {
-                    "${it.lastName}${it.firstName}"
-                },
-                email = it.email,
-                phone = it.phone,
-                isForeigner = !isKorean,
-                isKorean = isKorean,
-                firstName = it.firstName!!,
-                lastName = it.lastName!!,
-                isMobilePhone = isMobilePhone,
-                isOfficePhone = isOfficePhone,
-            )
+            val builder = PersonDtoBuilder()
+            Person(it).okay_i_will_give_you_what_you_want(builder)
+            builder.result()
         }
         val system = systemRepository.findByConfigId(id)?.let {
-            SystemDto(
-                id = it.id!!,
-                on = it.on!!,
-                off = !it.on!!,
-                notes = it.notes!!,
-            )
+            val builder = SystemDtoBuilder()
+            System(it).okay_i_will_give_you_what_you_want(builder)
+            builder.build()
         }
 
-
         val config = configRepository.findById(id).get()
-        val properties = config.let {
-            objectMapper.readValue(it.properties, Map::class.java)
-        } as Map<String, String>
+        val properties = Properties.parse(config.properties)
 
+        val whatIWantBoth = WhatIWantBoth()
+        properties.okay_i_will_give_you_what_you_want(whatIWantBoth)
+
+        // 문제3: 결국 이걸 원하는 건데...
+        //   PersonDtoBuilder 같은 방식으로 ConfigGetDto가 나오면 안되려나...
         return ConfigGetDto(
             id = config.id!!,
             isValidSystem = system != null,
             system = system,
             persons = persons,
-            properties = properties,
-            descriptions = properties.filterKeys { it.startsWith("PROPS_DESCRIPTION_") }.values.toList(),
+            properties = whatIWantBoth.getProperties(),
+            descriptions = whatIWantBoth.getDescriptions(),
         )
     }
 
