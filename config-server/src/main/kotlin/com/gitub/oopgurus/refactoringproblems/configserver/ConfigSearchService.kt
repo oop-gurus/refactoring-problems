@@ -22,10 +22,8 @@ class ConfigSearchService(
         }
 
         return configRepository.findById(id).get().let {
-            val builder = ConfigGetDtoBuilder()
+            val builder = ConfigGetDtoBuilder(system, persons)
             Config(it).okay_i_will_give_you_what_you_want(builder)
-            builder.system(system)
-            builder.persons(persons)
             builder.build()
         }
     }
