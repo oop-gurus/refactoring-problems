@@ -45,7 +45,7 @@ class PersonDtoBuilder: WhatIWantToPerson {
         isOfficePhoneGet = { isOfficePhone }
     }
 
-    fun result(): PersonDto {
+    fun build(): PersonDto {
         return PersonDto(
             id = idGet(),
             name = nameGet(),

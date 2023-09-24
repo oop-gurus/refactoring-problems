@@ -11,14 +11,10 @@ class ConfigSearchService(
 ) {
     fun getConfig(id: Long): ConfigGetDto {
         val persons = personRepository.findAllByConfigId(id).map {
-            val builder = PersonDtoBuilder()
-            Person(it).okay_i_will_give_you_what_you_want(builder)
-            builder.result()
+            Person(it)
         }
         val system = systemRepository.findByConfigId(id)?.let {
-            val builder = SystemDtoBuilder()
-            System(it).okay_i_will_give_you_what_you_want(builder)
-            builder.build()
+            System(it)
         }
 
         return configRepository.findById(id).get().let {

@@ -1,8 +1,8 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
 class ConfigGetDtoBuilder(
-    private val system: SystemDto?,
-    private val persons: List<PersonDto>,
+    private val system: System?,
+    private val persons: List<Person>,
 ): WhatIWantToConfig {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException() }
@@ -21,11 +21,19 @@ class ConfigGetDtoBuilder(
     }
 
     fun build(): ConfigGetDto {
+        val systemDtoBuilder = SystemDtoBuilder()
+        system?.okay_i_will_give_you_what_you_want(systemDtoBuilder)
+        val personDtoList = persons.map {
+            val personDtoBuilder = PersonDtoBuilder()
+            it.okay_i_will_give_you_what_you_want(personDtoBuilder)
+            personDtoBuilder.build()
+        }
+
         return ConfigGetDto(
             id = idGet(),
             isValidSystem = system != null,
-            system = system,
-            persons = persons,
+            system = systemDtoBuilder.build(),
+            persons = personDtoList,
             properties = propertiesGet(),
             descriptions = descriptionsGet(),
         )
