@@ -21,22 +21,13 @@ class ConfigSearchService(
             builder.build()
         }
 
-        val config = configRepository.findById(id).get()
-        val properties = Properties.parse(config.properties)
-
-        val whatIWantBothToProperties = WhatIWantBothToProperties()
-        properties.okay_i_will_give_you_what_you_want(whatIWantBothToProperties)
-
-        // 문제3: 결국 이걸 원하는 건데...
-        //   PersonDtoBuilder 같은 방식으로 ConfigGetDto가 나오면 안되려나...
-        return ConfigGetDto(
-            id = config.id!!,
-            isValidSystem = system != null,
-            system = system,
-            persons = persons,
-            properties = whatIWantBothToProperties.getProperties(),
-            descriptions = whatIWantBothToProperties.getDescriptions(),
-        )
+        return configRepository.findById(id).get().let {
+            val builder = ConfigGetDtoBuilder()
+            Config(it).okay_i_will_give_you_what_you_want(builder)
+            builder.system(system)
+            builder.persons(persons)
+            builder.build()
+        }
     }
 
     fun getAllConfigs(): List<ConfigGetDto> {
