@@ -2,9 +2,9 @@ package com.gitub.oopgurus.refactoringproblems.configserver
 
 class Person(
     private val entity: PersonEntity,
-) {
+): DomainObject {
 
-    fun okay_i_will_give_you_what_you_want(whatIWantToPerson: WhatIWantToPerson) {
+    override fun okay_i_will_give_you_what_you_want(whatIWantToPerson: WhatIWantToPerson) {
         whatIWantToPerson.name(name())
         whatIWantToPerson.firstName(firstName())
         whatIWantToPerson.lastName(lastName())
@@ -13,6 +13,14 @@ class Person(
         whatIWantToPerson.isKorean(isKorean())
         whatIWantToPerson.isMobilePhone(isMobilePhone())
         whatIWantToPerson.isOfficePhone(isOfficePhone())
+    }
+
+    override fun okay_i_will_give_you_what_you_want(whatIWantToSystem: WhatIWantToSystem) {
+        // nothing
+    }
+
+    override fun okay_i_will_give_you_what_you_want(whatIWantToProperties: WhatIWantToProperties) {
+        // nothing
     }
 
     private fun name(): String {

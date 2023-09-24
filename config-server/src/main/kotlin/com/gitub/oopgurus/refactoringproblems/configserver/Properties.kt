@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 class Properties(
     private val holder: Map<String, String>,
-) {
+): DomainObject {
     companion object {
         private val objectMapper = ObjectMapper()
 
@@ -13,7 +13,15 @@ class Properties(
         }
     }
 
-    fun okay_i_will_give_you_what_you_want(whatIWantToProperties: WhatIWantToProperties) {
+    override fun okay_i_will_give_you_what_you_want(whatIWantToPerson: WhatIWantToPerson) {
+        // nothing
+    }
+
+    override fun okay_i_will_give_you_what_you_want(whatIWantToSystem: WhatIWantToSystem) {
+        // nothing
+    }
+
+    override fun okay_i_will_give_you_what_you_want(whatIWantToProperties: WhatIWantToProperties) {
         whatIWantToProperties.descriptions(descriptions())
         whatIWantToProperties.properties(holder)
     }
