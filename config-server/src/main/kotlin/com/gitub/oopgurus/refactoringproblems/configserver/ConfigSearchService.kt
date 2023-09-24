@@ -9,9 +9,6 @@ class ConfigSearchService(
     private val systemRepository: SystemRepository,
     private val configRepository: ConfigRepository,
 ) {
-
-    private val objectMapper = ObjectMapper()
-
     fun getConfig(id: Long): ConfigGetDto {
         val persons = personRepository.findAllByConfigId(id).map {
             val builder = PersonDtoBuilder()
@@ -27,8 +24,8 @@ class ConfigSearchService(
         val config = configRepository.findById(id).get()
         val properties = Properties.parse(config.properties)
 
-        val whatIWantBoth = WhatIWantBoth()
-        properties.okay_i_will_give_you_what_you_want(whatIWantBoth)
+        val whatIWantBothToProperties = WhatIWantBothToProperties()
+        properties.okay_i_will_give_you_what_you_want(whatIWantBothToProperties)
 
         // 문제3: 결국 이걸 원하는 건데...
         //   PersonDtoBuilder 같은 방식으로 ConfigGetDto가 나오면 안되려나...
@@ -37,8 +34,8 @@ class ConfigSearchService(
             isValidSystem = system != null,
             system = system,
             persons = persons,
-            properties = whatIWantBoth.getProperties(),
-            descriptions = whatIWantBoth.getDescriptions(),
+            properties = whatIWantBothToProperties.getProperties(),
+            descriptions = whatIWantBothToProperties.getDescriptions(),
         )
     }
 

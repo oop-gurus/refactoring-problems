@@ -13,9 +13,9 @@ class Properties(
         }
     }
 
-    fun okay_i_will_give_you_what_you_want(whatIWant: WhatIWant) {
-        whatIWant.descriptions(descriptions())
-        whatIWant.properties(holder)
+    fun okay_i_will_give_you_what_you_want(whatIWantToProperties: WhatIWantToProperties) {
+        whatIWantToProperties.descriptions(descriptions())
+        whatIWantToProperties.properties(holder)
     }
 
     private fun descriptions(): List<String> {
