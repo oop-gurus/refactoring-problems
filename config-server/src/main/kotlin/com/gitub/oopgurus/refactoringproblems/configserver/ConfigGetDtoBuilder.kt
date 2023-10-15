@@ -13,7 +13,7 @@ class ConfigGetDtoBuilder: ConfigVisitor {
 
     override fun person(person: Person) {
         val builder = PersonDtoBuilderVisitor()
-        person.okay_i_will_give_you_what_you_want(builder)
+        person.accept(builder)
         personDtoList.add(builder.build())
     }
 
@@ -23,7 +23,7 @@ class ConfigGetDtoBuilder: ConfigVisitor {
 
     override fun system(system: System) {
         val builder = SystemDtoBuilderVisitor()
-        system.okay_i_will_give_you_what_you_want(builder)
+        system.accept(builder)
         systemDto = builder.build()
     }
 

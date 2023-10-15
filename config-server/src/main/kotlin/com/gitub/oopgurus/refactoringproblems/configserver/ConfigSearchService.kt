@@ -14,10 +14,11 @@ class ConfigSearchService(
         val configGetDtoBuilder = ConfigGetDtoBuilder()
 
         return configRepository.findById(id).get().let {
-            it.okay_i_will_give_you_what_you_want(configBuilder)
-            configBuilder
+            val config = configBuilder
+                .id(it.id!!)
+                .properties(it.properties)
                 .build()
-                .accept(configGetDtoBuilder)
+            config.accept(configGetDtoBuilder)
             configGetDtoBuilder.build()
         }
     }

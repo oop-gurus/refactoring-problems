@@ -12,12 +12,14 @@ class ConfigBuilder(
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var propertiesGet: () -> Properties = { throw IllegalStateException() }
 
-    fun id(id: Long) {
+    fun id(id: Long): ConfigBuilder {
         idGet = { id }
+        return this
     }
 
-    fun properties(properties: String) {
+    fun properties(properties: String): ConfigBuilder {
         propertiesGet = { Properties.parse(properties) }
+        return this
     }
 
     fun build(): Config {

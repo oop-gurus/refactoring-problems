@@ -5,7 +5,7 @@ class System(
     private val on: Boolean,
     private val notes: String,
 ): Element {
-    fun okay_i_will_give_you_what_you_want(systemVisitor: SystemVisitor) {
+    fun accept(systemVisitor: SystemVisitor) {
         systemVisitor.id(id)
         systemVisitor.on(on)
         systemVisitor.notes(notes)
