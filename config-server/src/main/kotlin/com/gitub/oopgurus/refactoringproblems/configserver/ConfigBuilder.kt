@@ -21,15 +21,29 @@ class ConfigBuilder(
     }
 
     fun build(): Config {
-        val persons = personRepository.findAllByConfigId(idGet()).map {
-            Person(it)
-        }
-        val systemEntity = systemRepository.findByConfigId(idGet())
         return Config(
             id = idGet(),
             properties = propertiesGet(),
-            persons =  Persons(persons),
-            system = systemEntity?.let { System(systemEntity) },
+            persons = makePersons(),
+            system = makeSystem(),
+        )
+    }
+
+    private fun makePersons() = personRepository.findAllByConfigId(idGet()).map {
+        Person(
+            id = it.id!!,
+            firstName = it.firstName!!,
+            lastName = it.lastName!!,
+            email = it.email!!,
+            phone = it.phone!!,
+        )
+    }.let { Persons(it) }
+
+    private fun makeSystem() = systemRepository.findByConfigId(idGet())?.let {
+        System(
+            id = it.id!!,
+            on = it.on!!,
+            notes = it.notes!!,
         )
     }
 }

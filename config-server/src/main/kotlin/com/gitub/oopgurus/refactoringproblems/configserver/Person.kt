@@ -1,45 +1,34 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
 class Person(
-    private val entity: PersonEntity,
+    private val id: Long,
+    private val firstName: String,
+    private val lastName: String,
+    private val email: String,
+    private val phone: String,
 ): Element {
 
     fun okay_i_will_give_you_what_you_want(personVisitor: PersonVisitor) {
-        personVisitor.id(id())
+        personVisitor.id(id)
         personVisitor.name(name())
-        personVisitor.firstName(firstName())
-        personVisitor.lastName(lastName())
-        personVisitor.email(email())
-        personVisitor.phone(phone())
+        personVisitor.firstName(firstName)
+        personVisitor.lastName(lastName)
+        personVisitor.email(email)
+        personVisitor.phone(phone)
         personVisitor.isKorean(isKorean())
         personVisitor.isMobilePhone(isMobilePhone())
         personVisitor.isOfficePhone(isOfficePhone())
     }
 
-    private fun id() = entity.id!!
-
     private fun name(): String {
         return if (isKorean()) {
-            "${firstName()}${lastName()}"
+            "${firstName}${lastName}"
         } else {
-            "${lastName()}${firstName()}"
+            "${lastName}${firstName}"
         }
     }
-
-    private fun lastName() = entity.lastName!!
-
-    private fun firstName() = entity.firstName!!
-
-    private fun email(): String {
-        return entity.email!!
-    }
-
-    private fun phone(): String {
-        return entity.phone!!
-    }
-
     private fun isKorean(): Boolean {
-        return entity.firstName!!.matches(Regex("[가-힣]+"))
+        return firstName.matches(Regex("[가-힣]+"))
     }
 
     private fun isForeigner(): Boolean {
@@ -47,11 +36,11 @@ class Person(
     }
 
     private fun isMobilePhone(): Boolean {
-        return entity.phone!!.startsWith("010")
+        return phone.startsWith("010")
     }
 
     private fun isOfficePhone(): Boolean {
-        return entity.phone!!.startsWith("02")
+        return phone.startsWith("02")
     }
 
     override fun accept(configVisitor: ConfigVisitor) {
