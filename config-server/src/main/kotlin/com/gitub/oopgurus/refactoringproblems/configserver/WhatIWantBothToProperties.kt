@@ -1,6 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-class WhatIWantBothToProperties: WhatIWantToProperties {
+class PropertiesVisitor: PropertiesVisitor {
     private var descriptionsGet: () -> List<String> = { throw IllegalStateException("descriptions 설정이 안되어있음") }
     private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException("properties 설정이 안되어있음") }
 

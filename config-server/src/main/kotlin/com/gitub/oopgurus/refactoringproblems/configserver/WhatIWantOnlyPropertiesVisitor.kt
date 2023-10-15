@@ -1,6 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-class WhatIWantOnlyProperties: WhatIWantToProperties {
+class WhatIWantOnlyPropertiesVisitor: PropertiesVisitor {
     private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException("properties 설정이 안되어있음") }
 
     override fun descriptions(descriptions: List<String>) {

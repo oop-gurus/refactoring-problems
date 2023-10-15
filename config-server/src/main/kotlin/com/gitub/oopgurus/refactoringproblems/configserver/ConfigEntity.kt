@@ -25,4 +25,9 @@ class ConfigEntity(
     @Column
     @CreationTimestamp
     val createdAt: LocalDateTime? = null,
-)
+) {
+    fun okay_i_will_give_you_what_you_want(configBuilder: ConfigBuilder) {
+        configBuilder.id(id!!)
+        configBuilder.properties(properties)
+    }
+}

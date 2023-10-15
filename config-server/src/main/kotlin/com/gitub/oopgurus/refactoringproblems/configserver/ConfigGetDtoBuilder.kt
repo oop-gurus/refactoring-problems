@@ -1,19 +1,30 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-class ConfigGetDtoBuilder(
-    private val system: System?,
-    private val persons: List<Person>,
-): WhatIWantToConfig {
+class ConfigGetDtoBuilder: ConfigVisitor {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var propertiesGet: () -> Map<String, String> = { throw IllegalStateException() }
     private var descriptionsGet: () -> List<String> = { throw IllegalStateException() }
+    private var systemDto: SystemDto? = null
+    private var personDtoList: MutableList<PersonDto> = mutableListOf()
 
     override fun id(id: Long) {
         idGet = { id }
     }
 
+    override fun person(person: Person) {
+        val builder = PersonDtoBuilderVisitor()
+        person.okay_i_will_give_you_what_you_want(builder)
+        personDtoList.add(builder.build())
+    }
+
     override fun properties(properties: Map<String, String>) {
         propertiesGet = { properties }
+    }
+
+    override fun system(system: System) {
+        val builder = SystemDtoBuilderVisitor()
+        system.okay_i_will_give_you_what_you_want(builder)
+        systemDto = builder.build()
     }
 
     override fun descriptions(descriptions: List<String>) {
@@ -21,18 +32,10 @@ class ConfigGetDtoBuilder(
     }
 
     fun build(): ConfigGetDto {
-        val systemDtoBuilder = SystemDtoBuilder()
-        system?.okay_i_will_give_you_what_you_want(systemDtoBuilder)
-        val personDtoList = persons.map {
-            val personDtoBuilder = PersonDtoBuilder()
-            it.okay_i_will_give_you_what_you_want(personDtoBuilder)
-            personDtoBuilder.build()
-        }
-
         return ConfigGetDto(
             id = idGet(),
-            isValidSystem = system != null,
-            system = systemDtoBuilder.build(),
+            isValidSystem = systemDto != null,
+            system = systemDto,
             persons = personDtoList,
             properties = propertiesGet(),
             descriptions = descriptionsGet(),

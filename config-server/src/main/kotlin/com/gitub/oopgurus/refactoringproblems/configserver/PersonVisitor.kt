@@ -1,6 +1,9 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-interface WhatIWantToPerson {
+interface PersonVisitor {
+
+    fun id(id: Long)
+
     fun name(name: String)
 
     fun firstName(firstName: String)

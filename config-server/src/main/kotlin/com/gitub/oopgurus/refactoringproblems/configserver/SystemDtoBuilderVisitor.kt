@@ -1,6 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-class SystemDtoBuilder: WhatIWantToSystem {
+class SystemDtoBuilderVisitor: SystemVisitor {
     private lateinit var idGet: () -> Long
     private lateinit var onGet: () -> Boolean
     private lateinit var offGet: () -> Boolean

@@ -2,26 +2,21 @@ package com.gitub.oopgurus.refactoringproblems.configserver
 
 class Person(
     private val entity: PersonEntity,
-): DomainObject {
+): Element {
 
-    override fun okay_i_will_give_you_what_you_want(whatIWantToPerson: WhatIWantToPerson) {
-        whatIWantToPerson.name(name())
-        whatIWantToPerson.firstName(firstName())
-        whatIWantToPerson.lastName(lastName())
-        whatIWantToPerson.email(email())
-        whatIWantToPerson.phone(phone())
-        whatIWantToPerson.isKorean(isKorean())
-        whatIWantToPerson.isMobilePhone(isMobilePhone())
-        whatIWantToPerson.isOfficePhone(isOfficePhone())
+    fun okay_i_will_give_you_what_you_want(personVisitor: PersonVisitor) {
+        personVisitor.id(id())
+        personVisitor.name(name())
+        personVisitor.firstName(firstName())
+        personVisitor.lastName(lastName())
+        personVisitor.email(email())
+        personVisitor.phone(phone())
+        personVisitor.isKorean(isKorean())
+        personVisitor.isMobilePhone(isMobilePhone())
+        personVisitor.isOfficePhone(isOfficePhone())
     }
 
-    override fun okay_i_will_give_you_what_you_want(whatIWantToSystem: WhatIWantToSystem) {
-        // nothing
-    }
-
-    override fun okay_i_will_give_you_what_you_want(whatIWantToProperties: WhatIWantToProperties) {
-        // nothing
-    }
+    private fun id() = entity.id!!
 
     private fun name(): String {
         return if (isKorean()) {
@@ -57,6 +52,10 @@ class Person(
 
     private fun isOfficePhone(): Boolean {
         return entity.phone!!.startsWith("02")
+    }
+
+    override fun accept(configVisitor: ConfigVisitor) {
+        configVisitor.person(this)
     }
 }
 

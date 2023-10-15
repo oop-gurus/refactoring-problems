@@ -1,6 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-class WhatIWantOnlyDescriptions : WhatIWantToProperties {
+class WhatIWantOnlyDescriptionsVisitor : PropertiesVisitor {
     private var descriptionsGet: () -> List<String> = { throw IllegalStateException("descriptions 설정이 안되어있음") }
 
     fun getDescriptions(): List<String> {

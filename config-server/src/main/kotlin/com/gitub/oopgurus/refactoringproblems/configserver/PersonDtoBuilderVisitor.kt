@@ -1,6 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-class PersonDtoBuilder: WhatIWantToPerson {
+class PersonDtoBuilderVisitor: PersonVisitor {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var nameGet: () -> String = { throw IllegalStateException() }
     private var firstNameGet: () -> String = { throw IllegalStateException() }
@@ -11,6 +11,10 @@ class PersonDtoBuilder: WhatIWantToPerson {
     private var isForeignerGet: () -> Boolean = { throw IllegalStateException() }
     private var isMobilePhoneGet: () -> Boolean = { throw IllegalStateException() }
     private var isOfficePhoneGet: () -> Boolean = { throw IllegalStateException() }
+
+    override fun id(id: Long) {
+        idGet = { id }
+    }
 
     override fun name(name: String) {
         nameGet = { name }
