@@ -34,21 +34,14 @@ class ConfigSearchService(
         val config = configRepository.findById(id).get()
         val properties = Properties.parse(config.properties)
 
-        val whatIWantBoth = WhatIWantBoth()
-        val whatIWantBoth2 = WhatIWantOnlyDescriptions()
-        val whatIWantBoth3 = WhatIWantOnlyProperties()
-        properties.okay_i_will_give_you_what_you_want(whatIWantBoth)
-
         // 문제3: 결국 이걸 원하는 건데...
         //   PersonDtoBuilder 같은 방식으로 ConfigGetDto가 나오면 안되려나...
-        return ConfigGetDto(
-            id = config.id!!,
-            isValidSystem = system != null,
-            system = system,
-            persons = persons,
-            properties = whatIWantBoth.getProperties(),
-            descriptions = whatIWantBoth.getDescriptions(),
-        )
+        return ConfigGetDtoBuilder()
+            .ID_값_채우기(config.id!!)
+            .PERSONS_값_채우기(persons)
+            .PROPERTIES_값_채우기(properties)
+            .SYSTEM_값_채우기(system)
+            .result()
     }
 
     fun getAllConfigs(): List<ConfigGetDto> {

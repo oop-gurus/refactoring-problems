@@ -14,6 +14,46 @@ data class ConfigGetDto(
     val descriptions: List<String>?,
 )
 
-class ConfigGetDtoSupplier() {
+class ConfigGetDtoBuilder() {
+    private var idGet: () -> Long = { throw IllegalStateException() }
+    private var isValidSystemGet: () -> Boolean? = { throw IllegalStateException() }
+    private var systemGet: () -> SystemDto? = { throw IllegalStateException() }
+    private var personsGet: () -> List<PersonDtoTypeA>? = { throw IllegalStateException() }
+    private var propertiesGet: () -> Map<String, String>? = { throw IllegalStateException() }
+    private var descriptionsGet: () -> List<String>? = { throw IllegalStateException() }
 
+    fun ID_값_채우기(id: Long): ConfigGetDtoBuilder {
+        idGet = { id }
+        return this
+    }
+
+    fun SYSTEM_값_채우기(systemDto: SystemDto?): ConfigGetDtoBuilder {
+        systemGet = { systemDto }
+        isValidSystemGet = { systemDto != null }
+        return this
+    }
+
+    fun PERSONS_값_채우기(persons: List<PersonDtoTypeA>?): ConfigGetDtoBuilder {
+        personsGet = { persons }
+        return this
+    }
+
+    fun PROPERTIES_값_채우기(properties: Properties): ConfigGetDtoBuilder {
+        val 내가_원하는_것 = WhatIWantBoth()
+        properties.okay_i_will_give_you_what_you_want(내가_원하는_것)
+        propertiesGet = { 내가_원하는_것.getProperties() }
+        descriptionsGet = { 내가_원하는_것.getDescriptions() }
+        return this
+    }
+
+    fun result(): ConfigGetDto {
+        return ConfigGetDto(
+            id = idGet(),
+            isValidSystem = isValidSystemGet(),
+            system = systemGet(),
+            persons = personsGet(),
+            properties = propertiesGet(),
+            descriptions = descriptionsGet(),
+        )
+    }
 }
