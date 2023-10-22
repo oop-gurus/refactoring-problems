@@ -55,4 +55,6 @@ class ConfigEditService(
         val merged = originProperties + newProperties
         configEntity.properties = objectMapper.writeValueAsString(merged)
     }
+
+
 }

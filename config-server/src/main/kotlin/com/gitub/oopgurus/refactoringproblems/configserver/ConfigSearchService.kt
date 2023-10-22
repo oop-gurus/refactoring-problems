@@ -14,17 +14,15 @@ class ConfigSearchService(
 
     fun getConfig(id: Long): ConfigGetDto {
         val persons = personRepository.findAllByConfigId(id).map {
-            val builder = PersonDtoBuilder()
+            val builder = PersonDtoTypeABuilders()
             Person(it).okay_i_will_give_you_what_you_want(builder)
             builder.result()
         }
+
+        // config가 같이 누군가를 포함한다?
         val system = systemRepository.findByConfigId(id)?.let {
-            SystemDto(
-                id = it.id!!,
-                on = it.on!!,
-                off = !it.on!!,
-                notes = it.notes!!,
-            )
+            // 1안
+            SystemDtoBuilder().getDto(System(it))
         }
 
 

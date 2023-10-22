@@ -4,7 +4,7 @@ data class ConfigGetDto(
     val id: Long,
     val isValidSystem: Boolean?, // true이면 system 필드는 non-null이어야 함
     val system: SystemDto?,
-    val persons: List<PersonDto>?,
+    val persons: List<PersonDtoTypeA>?,
 
     // 모든 key는 대문자로만 이루어져야 함
     // 모든 key는 PROPS_ 으로 시작해야함

@@ -5,23 +5,62 @@ class Person(
 ) {
 
     fun okay_i_will_give_you_what_you_want(personDtoBuilder: PersonDtoBuilder) {
-        personDtoBuilder.name(name())
-        personDtoBuilder.firstName(firstName())
-        personDtoBuilder.lastName(lastName())
-        personDtoBuilder.email(email())
-        personDtoBuilder.phone(phone())
-        personDtoBuilder.isKorean(isKorean())
-        personDtoBuilder.isMobilePhone(isMobilePhone())
-        personDtoBuilder.isOfficePhone(isOfficePhone())
+        /**
+         * TODO : 그럼 Builder는 내가 무엇이 필요한지 알고 채워야한다.
+         *
+         *
+         * 장/단점이 뭘까?
+         * 상황 1. person에 age 데이터가 추가된다면?
+         * 다른 builder는 영향을 받는가? -> 아니다. 추가가 필요한 dto builder에만 추가해주면 된다.
+         * 결론: 단점 아님
+         *
+         * 상황 2. person의 타입이 동적으로 정해진다면?
+         * 내 코드에서 korean일 경우 typeA를, foreigner일 경우 ForeignerDto 사용한다면?
+         * -> 국적에 따라 name의 순서가 다르다고 할 때 해결 방법
+         * 1. builder에서 해결
+         * 2. person method에서 해결
+         *
+         * 1번 상황의 문제는 builder를 정하는 것은 person 클래스가 생성되기 전이다.
+         * 여러 빌더중 어떤 타입을 사용할지 어떻게 정해줄 수 있지?
+         *
+         * 2. person에서 persondtobuilder들의 의존성은 없지만, 그걸 제공하기 위해 메소드에 동작이 변경되고 있다 (의존성이 숨어 있다고 느낌)
+         * -> 이미 사용 하는 곳에서 사용하고 있다면 문제 가능 / 데이터 제공을 위한 동작이 다시 안으로 들어온다.
+         *
+         * 결론: 단점 인것 같음
+         *
+         * 상황 3. dto가 추가되거나 변경될 때 해당 부분만 수정해주면 된다.
+         * 매우 큰 장점!! -> DTO의 종류가 매우 많을 때 좋을 것 같음
+         *
+         *
+         *  추가
+         *  1. 기존의 private fun이었던 것들 다 public으로 변경 됌 (ex: id(), name())
+         */
+        personDtoBuilder.나_넘겨줄테니까_너가_값_채워넣어(this)
 
-        // 문제점1: 아래 메서드가 호출 가능함
-        // personDtoBuilder.result()
+
+
 
         // 문제점2: PersonDtoBuilder는 PersonDto 에 대해서 알고 있는데...
         // 내가 그냥 만드는거랑 뭐가 달라?
+
+        /**
+         * https://thecodinglog.github.io/design/2019/10/29/visitor-pattern.html
+         * 이거랑 너무 다르다. 혼란 그 잡체임;;
+         * 비지터 패턴은 원래 묵시적 형변환을 제공하지 않아서 더블 디스패치 할려고 쓰는데
+         * , 난 그런 부분도 없음
+         *
+         * visitor pattern은 행동 패턴인데, 내껄 보니 생성 패턴이네;
+         */
+
+
     }
 
-    private fun name(): String {
+    fun id(): Long {
+        return entity.id!!
+    }
+
+
+    fun name(): String {
         return if (isKorean()) {
             "${firstName()}${lastName()}"
         } else {
@@ -29,92 +68,32 @@ class Person(
         }
     }
 
-    private fun lastName() = entity.lastName!!
+    fun lastName() = entity.lastName!!
 
-    private fun firstName() = entity.firstName!!
+    fun firstName() = entity.firstName!!
 
-    private fun email(): String {
+    fun email(): String {
         return entity.email!!
     }
 
-    private fun phone(): String {
+    fun phone(): String {
         return entity.phone!!
     }
 
-    private fun isKorean(): Boolean {
+    fun isKorean(): Boolean {
         return entity.firstName!!.matches(Regex("[가-힣]+"))
     }
 
-    private fun isForeigner(): Boolean {
+    fun isForeigner(): Boolean {
         return !isKorean()
     }
 
-    private fun isMobilePhone(): Boolean {
+    fun isMobilePhone(): Boolean {
         return entity.phone!!.startsWith("010")
     }
 
-    private fun isOfficePhone(): Boolean {
+    fun isOfficePhone(): Boolean {
         return entity.phone!!.startsWith("02")
     }
 }
 
-class PersonDtoBuilder {
-    private var idGet: () -> Long = { throw IllegalStateException() }
-    private var nameGet: () -> String = { throw IllegalStateException() }
-    private var firstNameGet: () -> String = { throw IllegalStateException() }
-    private var lastNameGet: () -> String = { throw IllegalStateException() }
-    private var emailGet: () -> String = { throw IllegalStateException() }
-    private var phoneGet: () -> String = { throw IllegalStateException() }
-    private var isKoreanGet: () -> Boolean = { throw IllegalStateException() }
-    private var isForeignerGet: () -> Boolean = { throw IllegalStateException() }
-    private var isMobilePhoneGet: () -> Boolean = { throw IllegalStateException() }
-    private var isOfficePhoneGet: () -> Boolean = { throw IllegalStateException() }
-
-    fun name(name: String) {
-        nameGet = { name }
-    }
-
-    fun firstName(firstName: String) {
-        firstNameGet = { firstName }
-    }
-
-    fun lastName(lastName: String) {
-        lastNameGet = { lastName }
-    }
-
-    fun email(email: String) {
-        emailGet = { email }
-    }
-
-    fun phone(phone: String) {
-        phoneGet = { phone }
-    }
-
-    fun isKorean(isKorean: Boolean) {
-        isKoreanGet = { isKorean }
-        isForeignerGet = { !isKorean }
-    }
-
-    fun isMobilePhone(isMobilePhone: Boolean) {
-        isMobilePhoneGet = { isMobilePhone }
-    }
-
-    fun isOfficePhone(isOfficePhone: Boolean) {
-        isOfficePhoneGet = { isOfficePhone }
-    }
-
-    fun result(): PersonDto {
-        return PersonDto(
-            id = idGet(),
-            name = nameGet(),
-            firstName = firstNameGet(),
-            lastName = lastNameGet(),
-            email = emailGet(),
-            phone = phoneGet(),
-            isKorean = isKoreanGet(),
-            isForeigner = isForeignerGet(),
-            isMobilePhone = isMobilePhoneGet(),
-            isOfficePhone = isOfficePhoneGet(),
-        )
-    }
-}
