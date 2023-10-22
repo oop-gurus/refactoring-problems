@@ -14,7 +14,7 @@ class ConfigSearchService(
 
     fun getConfig(id: Long): ConfigGetDto {
         val persons = personRepository.findAllByConfigId(id).map {
-            val builder = PersonDtoTypeABuilders()
+            val builder = PersonDtoTypeBuilders()
             Person(it).너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(builder)
             builder.result()
         }
@@ -30,7 +30,7 @@ class ConfigSearchService(
 //            supplier.result()
 
             // 3안
-            val supplier = SystemDtoSupplier()
+            val supplier = SystemDtoBuilder()
             System(it).너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(supplier)
             supplier.result()
         }

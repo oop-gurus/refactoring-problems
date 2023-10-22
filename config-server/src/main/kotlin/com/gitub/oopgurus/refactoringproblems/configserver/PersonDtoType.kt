@@ -1,6 +1,6 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
-data class PersonDtoTypeA(
+data class PersonDtoType(
     val id: Long,
 
     // true이면 isForeigner=false이어야 함
@@ -24,7 +24,7 @@ data class PersonDtoTypeA(
     val phone: String?, //
 )
 
-class PersonDtoTypeABuilders : 정보를_훔쳐갈놈 {
+class PersonDtoTypeBuilders : 정보를_훔쳐갈놈 {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var nameGet: () -> String = { throw IllegalStateException() }
     private var firstNameGet: () -> String = { throw IllegalStateException() }
@@ -51,8 +51,8 @@ class PersonDtoTypeABuilders : 정보를_훔쳐갈놈 {
         isOfficePhoneGet = { person.isOfficePhone() }
     }
 
-    fun result(): PersonDtoTypeA {
-        return PersonDtoTypeA(
+    fun result(): PersonDtoType {
+        return PersonDtoType(
             id = idGet(),
             name = nameGet(),
             firstName = firstNameGet(),

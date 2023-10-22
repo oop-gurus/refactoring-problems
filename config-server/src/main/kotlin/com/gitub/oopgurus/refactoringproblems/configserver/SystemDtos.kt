@@ -18,18 +18,11 @@ class System(
 
 }
 
-class SystemDtoSupplier: 정보를_훔쳐갈놈 {
+class SystemDtoBuilder: 정보를_훔쳐갈놈 {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var onGet: () -> Boolean? = { throw IllegalStateException() }
     private var offGet: () -> Boolean? = { throw IllegalStateException() }
     private var notesGet: () -> String? = { throw IllegalStateException() }
-
-    fun 값_채우기(system: System) {
-        idGet = { system.id }
-        onGet = { system.on }
-        offGet = { system.on.not() }
-        notesGet = { system.notes }
-    }
 
     fun result(): SystemDto {
         return SystemDto(
@@ -44,10 +37,10 @@ class SystemDtoSupplier: 정보를_훔쳐갈놈 {
         // 핵 구림
         val system = info as System
 
-        idGet = { info.id }
-        onGet = { info.on }
-        offGet = { info.on.not() }
-        notesGet = { info.notes }
+        idGet = { system.id }
+        onGet = { system.on }
+        offGet = { system.on.not() }
+        notesGet = { system.notes }
     }
 }
 

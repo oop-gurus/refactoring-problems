@@ -4,7 +4,7 @@ data class ConfigGetDto(
     val id: Long,
     val isValidSystem: Boolean?, // true이면 system 필드는 non-null이어야 함
     val system: SystemDto?,
-    val persons: List<PersonDtoTypeA>?,
+    val persons: List<PersonDtoType>?,
 
     // 모든 key는 대문자로만 이루어져야 함
     // 모든 key는 PROPS_ 으로 시작해야함
@@ -18,7 +18,7 @@ class ConfigGetDtoBuilder() {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var isValidSystemGet: () -> Boolean? = { throw IllegalStateException() }
     private var systemGet: () -> SystemDto? = { throw IllegalStateException() }
-    private var personsGet: () -> List<PersonDtoTypeA>? = { throw IllegalStateException() }
+    private var personsGet: () -> List<PersonDtoType>? = { throw IllegalStateException() }
     private var propertiesGet: () -> Map<String, String>? = { throw IllegalStateException() }
     private var descriptionsGet: () -> List<String>? = { throw IllegalStateException() }
 
@@ -33,7 +33,7 @@ class ConfigGetDtoBuilder() {
         return this
     }
 
-    fun PERSONS_값_채우기(persons: List<PersonDtoTypeA>?): ConfigGetDtoBuilder {
+    fun PERSONS_값_채우기(persons: List<PersonDtoType>?): ConfigGetDtoBuilder {
         personsGet = { persons }
         return this
     }
