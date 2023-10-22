@@ -15,7 +15,7 @@ class ConfigSearchService(
     fun getConfig(id: Long): ConfigGetDto {
         val persons = personRepository.findAllByConfigId(id).map {
             val builder = PersonDtoTypeABuilders()
-            Person(it).okay_i_will_give_you_what_you_want(builder)
+            Person(it).너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(builder)
             builder.result()
         }
 
@@ -25,8 +25,13 @@ class ConfigSearchService(
 //            SystemDtoBuilder().getDto(System(it))
 
             // 2안용 (아직 장점을 모르겠음)
+//            val supplier = SystemDtoSupplier()
+//            System(it).okay_i_will_give_you_what_you_want(supplier)
+//            supplier.result()
+
+            // 3안
             val supplier = SystemDtoSupplier()
-            System(it).okay_i_will_give_you_what_you_want(supplier)
+            System(it).너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(supplier)
             supplier.result()
         }
 

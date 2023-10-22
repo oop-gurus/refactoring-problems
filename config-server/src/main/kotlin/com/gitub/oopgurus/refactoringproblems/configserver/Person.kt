@@ -2,9 +2,9 @@ package com.gitub.oopgurus.refactoringproblems.configserver
 
 class Person(
     private val entity: PersonEntity,
-) {
+): 정보를_가진놈 {
 
-    fun okay_i_will_give_you_what_you_want(personDtoBuilder: PersonDtoBuilder) {
+    override fun 너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(도둑: 정보를_훔쳐갈놈) {
         /**
          * TODO : 그럼 Builder는 내가 무엇이 필요한지 알고 채워야한다.
          *
@@ -35,7 +35,9 @@ class Person(
          *  추가
          *  1. 기존의 private fun이었던 것들 다 public으로 변경 됌 (ex: id(), name())
          */
-        personDtoBuilder.나_넘겨줄테니까_너가_값_채워넣어(this)
+
+        // this가 person으로 타입을 알 수 있음 (타입 캐스팅이 필요없어짐)
+        도둑.원하는_정보만_채우기(this)
 
 
 
