@@ -39,8 +39,12 @@ class ConfigGetDtoBuilder() {
     }
 
     fun PROPERTIES_값_채우기(properties: Properties): ConfigGetDtoBuilder {
+        // 여기선 둘다 원해 (값 채워줘)
         val 내가_원하는_것 = WhatIWantBoth()
+
+        // 줘봐 채워줄께
         properties.okay_i_will_give_you_what_you_want(내가_원하는_것)
+
         propertiesGet = { 내가_원하는_것.getProperties() }
         descriptionsGet = { 내가_원하는_것.getDescriptions() }
         return this
