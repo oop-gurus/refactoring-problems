@@ -14,3 +14,6 @@ data class ConfigGetDto(
     val descriptions: List<String>?,
 )
 
+class ConfigGetDtoSupplier() {
+
+}

@@ -22,7 +22,12 @@ class ConfigSearchService(
         // config가 같이 누군가를 포함한다?
         val system = systemRepository.findByConfigId(id)?.let {
             // 1안
-            SystemDtoBuilder().getDto(System(it))
+//            SystemDtoBuilder().getDto(System(it))
+
+            // 2안용 (아직 장점을 모르겠음)
+            val supplier = SystemDtoSupplier()
+            System(it).okay_i_will_give_you_what_you_want(supplier)
+            supplier.result()
         }
 
 

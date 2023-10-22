@@ -11,15 +11,31 @@ class System(
     val updatedAt = systemEntity.updatedAt!!
     val createdAt = systemEntity.createdAt!!
 
+    fun okay_i_will_give_you_what_you_want(systemDtoSupplier: SystemDtoSupplier) {
+        systemDtoSupplier.값_채우기(this)
+    }
+
 }
 
-class SystemDtoBuilder {
-    fun getDto(system: System): SystemDto {
+class SystemDtoSupplier {
+    private var idGet: () -> Long = { throw IllegalStateException() }
+    private var onGet: () -> Boolean? = { throw IllegalStateException() }
+    private var offGet: () -> Boolean? = { throw IllegalStateException() }
+    private var notesGet: () -> String? = { throw IllegalStateException() }
+
+    fun 값_채우기(system: System) {
+        idGet = { system.id }
+        onGet = { system.on }
+        offGet = { system.on.not() }
+        notesGet = { system.notes }
+    }
+
+    fun result(): SystemDto {
         return SystemDto(
-            id = system.id,
-            on = system.on,
-            off = system.on.not(),
-            notes = system.notes
+            id = idGet(),
+            on = onGet(),
+            off = offGet(),
+            notes = notesGet(),
         )
     }
 }
