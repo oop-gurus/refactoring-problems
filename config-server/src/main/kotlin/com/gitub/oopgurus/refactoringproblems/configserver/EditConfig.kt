@@ -1,13 +1,24 @@
 package com.gitub.oopgurus.refactoringproblems.configserver
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.stereotype.Component
+
+interface ConfigVisitor {
+    fun firstName(firstName: String?)
+    fun lastName(lastName: String?)
+    fun phone(phone: String?)
+    fun on(on: Boolean?)
+    fun notes(notes: String?)
+    fun properties(properties: Map<String, String>?)
+}
+
 
 class EditConfig(
     private val configId: Long,
     private val configRepository: ConfigRepository,
     private val personRepository: PersonRepository,
     private val systemRepository: SystemRepository
-) {
+) : ConfigVisitor {
     private val config by lazy { configRepository.findById(configId).get() }
     private val persons by lazy { personRepository.findAllByConfigId(configId) }
     private val system by lazy { systemRepository.findByConfigId(configId) }
@@ -15,36 +26,36 @@ class EditConfig(
     private val objectMapper = ObjectMapper()
 
 
-    fun fixFirstName(firstName: String?) {
+    override fun firstName(firstName: String?) {
         if (firstName == null) return
         persons.forEach { it.firstName = firstName }
     }
 
-    fun fixLastName(lastName: String?) {
+    override fun lastName(lastName: String?) {
         if (lastName == null) return
         persons.forEach { it.lastName = lastName }
     }
 
-    fun fixPhone(phone: String?) {
+    override fun phone(phone: String?) {
         if (phone == null) return
         persons.forEach { it.phone = phone }
     }
 
-    fun fixOn(on: Boolean?) {
+    override fun on(on: Boolean?) {
         if (on == null) return
         system?.let {
             it.on = on
         }
     }
 
-    fun fixNotes(notes: String?) {
+    override fun notes(notes: String?) {
         if (notes == null) return
         system?.let {
             it.notes = notes
         }
     }
 
-    fun fixProperties(properties: Map<String, String>?) {
+    override fun properties(properties: Map<String, String>?) {
         if (properties == null) return
         val originProperties = objectMapper.readValue(config.properties, Map::class.java) as Map<String, String>
 
@@ -56,5 +67,23 @@ class EditConfig(
         personRepository.saveAll(persons)
         system?.let { systemRepository.save(it) }
         configRepository.save(config)
+    }
+}
+
+
+class Keyword(value: String) {
+
+}
+
+
+@Component
+class KeywordFactory(
+    private val maximumLength: Int = 10
+) {
+    fun create(value: String): Keyword {
+        if (value.length > maximumLength) {
+            throw IllegalArgumentException("키워드는 최대 $maximumLength 글자까지 가능합니다.")
+        }
+        return Keyword(value)
     }
 }

@@ -24,6 +24,8 @@ data class PersonDtoType(
     val phone: String?, //
 )
 
+
+
 class PersonDtoTypeBuilders : 정보를_훔쳐갈놈 {
     private var idGet: () -> Long = { throw IllegalStateException() }
     private var nameGet: () -> String = { throw IllegalStateException() }

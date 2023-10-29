@@ -6,8 +6,8 @@ interface 정보를_가진놈 {
     fun 너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(도둑: 정보를_훔쳐갈놈)
 }
 
-interface 정보를_훔쳐갈놈 {
-    fun 원하는_정보만_채우기(info: 정보를_가진놈)
+interface Person_서비스_센터 {
+    fun 원하는_정보만_채우기(info: Person)
 }
 
 class Properties(

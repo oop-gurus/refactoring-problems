@@ -19,12 +19,12 @@ class ConfigEditService(
             systemRepository = systemRepository
         )
 
-        editConfig.fixFirstName(configEditDto.personFirstName)
-        editConfig.fixLastName(configEditDto.personLastName)
-        editConfig.fixPhone(configEditDto.personPhone)
-        editConfig.fixOn(configEditDto.systemOn)
-        editConfig.fixNotes(configEditDto.systemNotes)
-        editConfig.fixProperties(configEditDto.properties)
+        editConfig.firstName(configEditDto.personFirstName)
+        editConfig.lastName(configEditDto.personLastName)
+        editConfig.phone(configEditDto.personPhone)
+        editConfig.on(configEditDto.systemOn)
+        editConfig.notes(configEditDto.systemNotes)
+        editConfig.properties(configEditDto.properties)
 
         editConfig.reflectDataBase()
     }

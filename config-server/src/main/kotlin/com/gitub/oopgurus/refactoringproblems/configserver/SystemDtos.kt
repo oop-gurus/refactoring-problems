@@ -4,7 +4,9 @@ class System(
     private val systemEntity: SystemEntity
 ): 정보를_가진놈 {
     // TODO : nullable 체크 안함 (스펙 모르겠음)
-    val id: Long = systemEntity.id!!
+
+    // 1 System을 외부에 노출하고 싶지 않다. private method
+    private val id: Long = systemEntity.id!!
     val on = systemEntity.on!!
     val notes = systemEntity.notes!!
     val configId = systemEntity.configId!!
