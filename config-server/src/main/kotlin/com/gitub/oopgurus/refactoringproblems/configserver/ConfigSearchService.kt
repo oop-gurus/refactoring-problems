@@ -14,58 +14,40 @@ class ConfigSearchService(
 
     fun getConfig(id: Long): ConfigGetDto {
         val persons = personRepository.findAllByConfigId(id).map {
-            var isMobilePhone = false
-            var isOfficePhone = false
-            if (it.phone!!.startsWith("010")) {
-                isMobilePhone = true
-            }
-            if (it.phone!!.startsWith("02")) {
-                isOfficePhone = true
-            }
-
-            // check firstname has alphabet
-            val isKorean = it.firstName!!.matches(Regex("[가-힣]+"))
-
-            PersonDto(
-                id = it.id!!,
-                name = if (isKorean) {
-                    "${it.firstName}${it.lastName}"
-                } else {
-                    "${it.lastName}${it.firstName}"
-                },
-                email = it.email,
-                phone = it.phone,
-                isForeigner = !isKorean,
-                isKorean = isKorean,
-                firstName = it.firstName!!,
-                lastName = it.lastName!!,
-                isMobilePhone = isMobilePhone,
-                isOfficePhone = isOfficePhone,
-            )
+            val builder = PersonDtoTypeBuilders()
+            Person(it).너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(builder)
+            builder.result()
         }
+
+        // config가 같이 누군가를 포함한다?
         val system = systemRepository.findByConfigId(id)?.let {
-            SystemDto(
-                id = it.id!!,
-                on = it.on!!,
-                off = !it.on!!,
-                notes = it.notes!!,
-            )
+            // 1안
+//            SystemDtoBuilder().getDto(System(it))
+
+            // 2안용 (아직 장점을 모르겠음)
+//            val supplier = SystemDtoSupplier()
+//            System(it).okay_i_will_give_you_what_you_want(supplier)
+//            supplier.result()
+
+            // 3안
+            val supplier = SystemDtoBuilder()
+            System(it).너한테_내정보_허락해줄께_정보_넘겨줄테니_너가_값_채워넣어(supplier)
+            supplier.result()
         }
 
 
         val config = configRepository.findById(id).get()
-        val properties = config.let {
-            objectMapper.readValue(it.properties, Map::class.java)
-        } as Map<String, String>
+        val properties = Properties.parse(config.properties)
 
-        return ConfigGetDto(
-            id = config.id!!,
-            isValidSystem = system != null,
-            system = system,
-            persons = persons,
-            properties = properties,
-            descriptions = properties.filterKeys { it.startsWith("PROPS_DESCRIPTION_") }.values.toList(),
-        )
+
+        // 문제3: 결국 이걸 원하는 건데...
+        //   PersonDtoBuilder 같은 방식으로 ConfigGetDto가 나오면 안되려나...
+        return ConfigGetDtoBuilder()
+            .ID_값_채우기(config.id!!)
+            .PERSONS_값_채우기(persons)
+            .PROPERTIES_값_채우기(properties)
+            .SYSTEM_값_채우기(system)
+            .result()
     }
 
     fun getAllConfigs(): List<ConfigGetDto> {
