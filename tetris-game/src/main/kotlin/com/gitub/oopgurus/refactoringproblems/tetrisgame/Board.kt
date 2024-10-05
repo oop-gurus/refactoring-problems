@@ -24,13 +24,11 @@ class Board(parent: Tetris) : JPanel() {
     var curX = 0
     var curY = 0
     var curPiece: Shape = Shape()
-    lateinit var board: Array<Tetrominoe?>
+    var board: Array<Tetrominoe?> = arrayOfNulls(boardWidth * boardHeight)
 
     init {
         initBoard(parent)
     }
-
-
 
     private fun initBoard(parent: Tetris) {
         setFocusable(true)
