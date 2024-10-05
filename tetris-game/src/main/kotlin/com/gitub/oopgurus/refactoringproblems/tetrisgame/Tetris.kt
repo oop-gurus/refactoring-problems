@@ -27,7 +27,7 @@ class Tetris : JFrame() {
         val gameCycle = GameCycle()
         val gameTimer = RealTimer(Timer(300, gameCycle))
 
-        val board = Board(this, gameCycle, gameTimer)
+        val board = Board(this, gameTimer)
         gameCycle.board = board
 
         add(board)

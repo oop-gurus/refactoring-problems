@@ -11,7 +11,6 @@ import javax.swing.JPanel
 
 class Board(
     parent: Tetris,
-    private val actionListener: ActionListener,
     private val gameTimer: GameTimer,
 ) : JPanel() {
     private var statusbar: JLabel? = null
