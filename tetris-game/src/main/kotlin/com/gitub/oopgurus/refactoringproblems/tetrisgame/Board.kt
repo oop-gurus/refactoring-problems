@@ -12,18 +12,18 @@ import javax.swing.Timer
 
 
 class Board(parent: Tetris) : JPanel() {
-    private val BOARD_WIDTH = 10
-    private val BOARD_HEIGHT = 22
-    private val PERIOD_INTERVAL = 300
+    val BOARD_WIDTH = 10
+    val BOARD_HEIGHT = 22
+    val PERIOD_INTERVAL = 300
     private var timer: Timer? = null
-    private var isFallingFinished = false
-    private var isPaused = false
-    private var numLinesRemoved = 0
-    private var curX = 0
-    private var curY = 0
+    var isFallingFinished = false
+    var isPaused = false
+    var numLinesRemoved = 0
+    var curX = 0
+    var curY = 0
     private var statusbar: JLabel? = null
-    private var curPiece: Shape = Shape()
-    private lateinit var board: Array<Tetrominoe?>
+    var curPiece: Shape = Shape()
+    lateinit var board: Array<Tetrominoe?>
 
     init {
         initBoard(parent)
