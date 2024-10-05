@@ -23,7 +23,10 @@ class Tetris : JFrame() {
     private fun initUI() {
         statusBar = JLabel(" 0")
         add(statusBar, BorderLayout.SOUTH)
-        val board = Board(this)
+        val gameCycle = GameCycle()
+        val board = Board(this, gameCycle)
+        gameCycle.board = board
+
         add(board)
         board.start()
         setTitle("Tetris")

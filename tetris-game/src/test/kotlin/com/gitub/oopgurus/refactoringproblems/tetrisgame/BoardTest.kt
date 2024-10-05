@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldBe
 class BoardTest : StringSpec({
 
     "상태가 서로 같다" {
-        Board(Tetris()) shouldBe Board(Tetris())
+        Board(Tetris(), NoGameCycle) shouldBe Board(Tetris(), NoGameCycle)
     }
 
     "최초 상태" {
@@ -17,7 +17,7 @@ class BoardTest : StringSpec({
         // ??? user = NullUser?
 
         // 최초 상태를 검사한다
-        val board = Board(Tetris())
+        val board = Board(Tetris(), NoGameCycle)
         board.isPaused shouldBe false
         board.numLinesRemoved shouldBe 0
         board.curX shouldBe null

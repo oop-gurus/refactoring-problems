@@ -2,7 +2,6 @@ package com.gitub.oopgurus.refactoringproblems.tetrisgame
 
 import java.awt.Color
 import java.awt.Graphics
-import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -11,7 +10,10 @@ import javax.swing.JPanel
 import javax.swing.Timer
 
 
-class Board(parent: Tetris) : JPanel() {
+class Board(
+    parent: Tetris,
+    private val actionListener: ActionListener,
+) : JPanel() {
     private var timer: Timer? = null
     private var statusbar: JLabel? = null
 
@@ -54,7 +56,7 @@ class Board(parent: Tetris) : JPanel() {
         curPiece = Shape()
         clearBoard()
         newPiece()
-        timer = Timer(periodInterval, GameCycle())
+        timer = Timer(periodInterval, actionListener)
         timer!!.start()
     }
 
@@ -216,13 +218,7 @@ class Board(parent: Tetris) : JPanel() {
         )
     }
 
-    private inner class GameCycle : ActionListener {
-        override fun actionPerformed(e: ActionEvent) {
-            doGameCycle()
-        }
-    }
-
-    private fun doGameCycle() {
+    fun doGameCycle() {
         update()
         repaint()
     }
