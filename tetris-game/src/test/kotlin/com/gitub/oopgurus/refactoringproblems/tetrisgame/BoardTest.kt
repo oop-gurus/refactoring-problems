@@ -58,4 +58,20 @@ class BoardTest : StringSpec({
             board.board contentDeepEquals Array(board.boardWidth * board.boardHeight) { Tetrominoe.NoShape }
         }
     }
+
+    "시간이 3 ticks 흘렀을 때" {
+        val gameCycle = GameCycle()
+        val board = Board(Tetris(), StaticTimer(3, gameCycle), StaticTetrominoeStream(Tetrominoe.LineShape))
+        gameCycle.board = board
+        board.start()
+
+        assertSoftly {
+            board.isPaused shouldBe false
+            board.numLinesRemoved shouldBe 0
+            board.curX shouldBe 6
+            board.curY shouldBe 17
+            board.curPiece shouldBe Shape().also { it.setShape(Tetrominoe.LineShape) }
+            board.board contentDeepEquals Array(board.boardWidth * board.boardHeight) { Tetrominoe.NoShape }
+        }
+    }
 })
