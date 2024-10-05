@@ -21,8 +21,8 @@ class Board(parent: Tetris) : JPanel() {
     var isFallingFinished = false
     var isPaused = false
     var numLinesRemoved = 0
-    var curX = 0
-    var curY = 0
+    var curX: Int? = null
+    var curY: Int? = null
     var curPiece: Shape = Shape()
     var board: Array<Tetrominoe?> = arrayOfNulls(boardWidth * boardHeight)
 
@@ -88,8 +88,8 @@ class Board(parent: Tetris) : JPanel() {
         }
         if (curPiece.shape !== Tetrominoe.NoShape) {
             for (i in 0..3) {
-                val x: Int = curX + curPiece.x(i)
-                val y: Int = curY - curPiece.y(i)
+                val x: Int = curX!! + curPiece.x(i)
+                val y: Int = curY!! - curPiece.y(i)
                 drawSquare(
                     g, x * squareWidth(),
                     boardTop + (boardHeight - y - 1) * squareHeight(),
@@ -101,8 +101,8 @@ class Board(parent: Tetris) : JPanel() {
 
     private fun dropDown() {
         var newY = curY
-        while (newY > 0) {
-            if (!tryMove(curPiece, curX, newY - 1)) {
+        while (newY!! > 0) {
+            if (!tryMove(curPiece, curX!!, newY - 1)) {
                 break
             }
             newY--
@@ -111,7 +111,7 @@ class Board(parent: Tetris) : JPanel() {
     }
 
     private fun oneLineDown() {
-        if (!tryMove(curPiece, curX, curY - 1)) {
+        if (!tryMove(curPiece, curX!!, curY!! - 1)) {
             pieceDropped()
         }
     }
@@ -124,8 +124,8 @@ class Board(parent: Tetris) : JPanel() {
 
     private fun pieceDropped() {
         for (i in 0..3) {
-            val x: Int = curX + curPiece.x(i)
-            val y: Int = curY - curPiece.y(i)
+            val x: Int = curX!! + curPiece.x(i)
+            val y: Int = curY!! - curPiece.y(i)
             board[y * boardWidth + x] = curPiece.shape
         }
         removeFullLines()
@@ -138,7 +138,7 @@ class Board(parent: Tetris) : JPanel() {
         curPiece.setRandomShape()
         curX = boardWidth / 2 + 1
         curY = boardHeight - 1 + curPiece.minY()
-        if (!tryMove(curPiece, curX, curY)) {
+        if (!tryMove(curPiece, curX!!, curY!!)) {
             curPiece.setShape(Tetrominoe.NoShape)
             timer!!.stop()
             val msg = String.format("Game over. Score: %d", numLinesRemoved)
@@ -265,8 +265,8 @@ class Board(parent: Tetris) : JPanel() {
         result = 31 * result + isFallingFinished.hashCode()
         result = 31 * result + isPaused.hashCode()
         result = 31 * result + numLinesRemoved
-        result = 31 * result + curX
-        result = 31 * result + curY
+        result = 31 * result + curX!!
+        result = 31 * result + curY!!
         result = 31 * result + curPiece.hashCode()
         result = 31 * result + board.contentHashCode()
         return result
@@ -284,10 +284,10 @@ class Board(parent: Tetris) : JPanel() {
             val keycode = e.keyCode
             when (keycode) {
                 KeyEvent.VK_P -> pause()
-                KeyEvent.VK_LEFT -> tryMove(curPiece, curX - 1, curY)
-                KeyEvent.VK_RIGHT -> tryMove(curPiece, curX + 1, curY)
-                KeyEvent.VK_DOWN -> tryMove(curPiece.rotateRight(), curX, curY)
-                KeyEvent.VK_UP -> tryMove(curPiece.rotateLeft(), curX, curY)
+                KeyEvent.VK_LEFT -> tryMove(curPiece, curX!! - 1, curY!!)
+                KeyEvent.VK_RIGHT -> tryMove(curPiece, curX!! + 1, curY!!)
+                KeyEvent.VK_DOWN -> tryMove(curPiece.rotateRight(), curX!!, curY!!)
+                KeyEvent.VK_UP -> tryMove(curPiece.rotateLeft(), curX!!, curY!!)
                 KeyEvent.VK_SPACE -> dropDown()
                 KeyEvent.VK_D -> oneLineDown()
             }
