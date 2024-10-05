@@ -30,6 +30,8 @@ class Board(parent: Tetris) : JPanel() {
         initBoard(parent)
     }
 
+
+
     private fun initBoard(parent: Tetris) {
         setFocusable(true)
         statusbar = parent.statusBar
@@ -236,6 +238,44 @@ class Board(parent: Tetris) : JPanel() {
         } else {
             oneLineDown()
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Board
+
+        if (boardWidth != other.boardWidth) return false
+        if (boardHeight != other.boardHeight) return false
+        if (periodInterval != other.periodInterval) return false
+        if (isFallingFinished != other.isFallingFinished) return false
+        if (isPaused != other.isPaused) return false
+        if (numLinesRemoved != other.numLinesRemoved) return false
+        if (curX != other.curX) return false
+        if (curY != other.curY) return false
+        if (curPiece != other.curPiece) return false
+        if (!board.contentEquals(other.board)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = boardWidth
+        result = 31 * result + boardHeight
+        result = 31 * result + periodInterval
+        result = 31 * result + isFallingFinished.hashCode()
+        result = 31 * result + isPaused.hashCode()
+        result = 31 * result + numLinesRemoved
+        result = 31 * result + curX
+        result = 31 * result + curY
+        result = 31 * result + curPiece.hashCode()
+        result = 31 * result + board.contentHashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "Board(boardWidth=$boardWidth, boardHeight=$boardHeight, periodInterval=$periodInterval, isFallingFinished=$isFallingFinished, isPaused=$isPaused, numLinesRemoved=$numLinesRemoved, curX=$curX, curY=$curY, curPiece=$curPiece, board=${board.contentToString()})"
     }
 
     internal inner class TAdapter : KeyAdapter() {
