@@ -12,16 +12,17 @@ import javax.swing.Timer
 
 
 class Board(parent: Tetris) : JPanel() {
-    val BOARD_WIDTH = 10
-    val BOARD_HEIGHT = 22
-    val PERIOD_INTERVAL = 300
     private var timer: Timer? = null
+    private var statusbar: JLabel? = null
+
+    val boardWidth = 10
+    val boardHeight = 22
+    val periodInterval = 300
     var isFallingFinished = false
     var isPaused = false
     var numLinesRemoved = 0
     var curX = 0
     var curY = 0
-    private var statusbar: JLabel? = null
     var curPiece: Shape = Shape()
     lateinit var board: Array<Tetrominoe?>
 
@@ -36,23 +37,23 @@ class Board(parent: Tetris) : JPanel() {
     }
 
     private fun squareWidth(): Int {
-        return size.getWidth().toInt() / BOARD_WIDTH
+        return size.getWidth().toInt() / boardWidth
     }
 
     private fun squareHeight(): Int {
-        return size.getHeight().toInt() / BOARD_HEIGHT
+        return size.getHeight().toInt() / boardHeight
     }
 
     private fun shapeAt(x: Int, y: Int): Tetrominoe? {
-        return board[y * BOARD_WIDTH + x]
+        return board[y * boardWidth + x]
     }
 
     fun start() {
         curPiece = Shape()
-        board = arrayOfNulls<Tetrominoe>(BOARD_WIDTH * BOARD_HEIGHT)
+        board = arrayOfNulls<Tetrominoe>(boardWidth * boardHeight)
         clearBoard()
         newPiece()
-        timer = Timer(PERIOD_INTERVAL, GameCycle())
+        timer = Timer(periodInterval, GameCycle())
         timer!!.start()
     }
 
@@ -73,10 +74,10 @@ class Board(parent: Tetris) : JPanel() {
 
     private fun doDrawing(g: Graphics) {
         val size = size
-        val boardTop = size.getHeight().toInt() - BOARD_HEIGHT * squareHeight()
-        for (i in 0 until BOARD_HEIGHT) {
-            for (j in 0 until BOARD_WIDTH) {
-                val shape: Tetrominoe = shapeAt(j, BOARD_HEIGHT - i - 1)!!
+        val boardTop = size.getHeight().toInt() - boardHeight * squareHeight()
+        for (i in 0 until boardHeight) {
+            for (j in 0 until boardWidth) {
+                val shape: Tetrominoe = shapeAt(j, boardHeight - i - 1)!!
                 if (shape !== Tetrominoe.NoShape) {
                     drawSquare(
                         g, j * squareWidth(),
@@ -91,7 +92,7 @@ class Board(parent: Tetris) : JPanel() {
                 val y: Int = curY - curPiece.y(i)
                 drawSquare(
                     g, x * squareWidth(),
-                    boardTop + (BOARD_HEIGHT - y - 1) * squareHeight(),
+                    boardTop + (boardHeight - y - 1) * squareHeight(),
                     curPiece.shape
                 )
             }
@@ -116,7 +117,7 @@ class Board(parent: Tetris) : JPanel() {
     }
 
     private fun clearBoard() {
-        for (i in 0 until BOARD_HEIGHT * BOARD_WIDTH) {
+        for (i in 0 until boardHeight * boardWidth) {
             board[i] = Tetrominoe.NoShape
         }
     }
@@ -125,7 +126,7 @@ class Board(parent: Tetris) : JPanel() {
         for (i in 0..3) {
             val x: Int = curX + curPiece.x(i)
             val y: Int = curY - curPiece.y(i)
-            board[y * BOARD_WIDTH + x] = curPiece.shape
+            board[y * boardWidth + x] = curPiece.shape
         }
         removeFullLines()
         if (!isFallingFinished) {
@@ -135,8 +136,8 @@ class Board(parent: Tetris) : JPanel() {
 
     private fun newPiece() {
         curPiece.setRandomShape()
-        curX = BOARD_WIDTH / 2 + 1
-        curY = BOARD_HEIGHT - 1 + curPiece.minY()
+        curX = boardWidth / 2 + 1
+        curY = boardHeight - 1 + curPiece.minY()
         if (!tryMove(curPiece, curX, curY)) {
             curPiece.setShape(Tetrominoe.NoShape)
             timer!!.stop()
@@ -149,7 +150,7 @@ class Board(parent: Tetris) : JPanel() {
         for (i in 0..3) {
             val x: Int = newX + newPiece.x(i)
             val y: Int = newY - newPiece.y(i)
-            if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT) {
+            if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight) {
                 return false
             }
             if (shapeAt(x, y) !== Tetrominoe.NoShape) {
@@ -165,9 +166,9 @@ class Board(parent: Tetris) : JPanel() {
 
     private fun removeFullLines() {
         var numFullLines = 0
-        for (i in BOARD_HEIGHT - 1 downTo 0) {
+        for (i in boardHeight - 1 downTo 0) {
             var lineIsFull = true
-            for (j in 0 until BOARD_WIDTH) {
+            for (j in 0 until boardWidth) {
                 if (shapeAt(j, i) === Tetrominoe.NoShape) {
                     lineIsFull = false
                     break
@@ -175,9 +176,9 @@ class Board(parent: Tetris) : JPanel() {
             }
             if (lineIsFull) {
                 numFullLines++
-                for (k in i until BOARD_HEIGHT - 1) {
-                    for (j in 0 until BOARD_WIDTH) {
-                        board[k * BOARD_WIDTH + j] = shapeAt(j, k + 1)
+                for (k in i until boardHeight - 1) {
+                    for (j in 0 until boardWidth) {
+                        board[k * boardWidth + j] = shapeAt(j, k + 1)
                     }
                 }
             }
