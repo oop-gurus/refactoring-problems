@@ -4,6 +4,7 @@ import java.awt.BorderLayout
 import java.awt.EventQueue
 import javax.swing.JFrame
 import javax.swing.JLabel
+import javax.swing.Timer
 
 
 /*
@@ -24,7 +25,9 @@ class Tetris : JFrame() {
         statusBar = JLabel(" 0")
         add(statusBar, BorderLayout.SOUTH)
         val gameCycle = GameCycle()
-        val board = Board(this, gameCycle)
+        val gameTimer = RealTimer(Timer(300, gameCycle))
+
+        val board = Board(this, gameCycle, gameTimer)
         gameCycle.board = board
 
         add(board)

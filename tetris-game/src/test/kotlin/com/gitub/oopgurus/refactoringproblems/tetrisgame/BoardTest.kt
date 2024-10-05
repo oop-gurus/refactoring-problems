@@ -1,12 +1,13 @@
 package com.gitub.oopgurus.refactoringproblems.tetrisgame
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 class BoardTest : StringSpec({
 
     "상태가 서로 같다" {
-        Board(Tetris(), NoGameCycle) shouldBe Board(Tetris(), NoGameCycle)
+        Board(Tetris(), NoGameCycle, NoTimer) shouldBe Board(Tetris(), NoGameCycle, NoTimer)
     }
 
     "최초 상태" {
@@ -17,12 +18,35 @@ class BoardTest : StringSpec({
         // ??? user = NullUser?
 
         // 최초 상태를 검사한다
-        val board = Board(Tetris(), NoGameCycle)
+        val board = Board(Tetris(), NoGameCycle, NoTimer)
         board.isPaused shouldBe false
         board.numLinesRemoved shouldBe 0
         board.curX shouldBe null
         board.curY shouldBe null
         board.curPiece shouldBe null
-        board.board shouldBe Array(board.boardWidth * board.boardHeight) { Tetrominoe.NoShape }
+        board.board contentDeepEquals Array(board.boardWidth * board.boardHeight) { Tetrominoe.NoShape }
+    }
+
+    "시간이 조금 흘렀을 때" {
+        // 시간이 흐르고
+        // ??? timer = Timer?
+
+        // 유저 입력이 없는 경우
+        // ??? user = NullUser?
+
+        // 시간이 조금 흐른 상태를 검사한다
+        val gameCycle = GameCycle()
+        val board = Board(Tetris(), NoGameCycle, StaticTimer(1, gameCycle))
+        gameCycle.board = board
+        board.start()
+
+        assertSoftly {
+            board.isPaused shouldBe false
+            board.numLinesRemoved shouldBe 0
+            board.curX shouldBe 6
+            board.curY shouldBe 19
+            board.curPiece shouldBe Shape().also { it.setShape(Tetrominoe.LineShape) }
+            board.board contentDeepEquals Array(board.boardWidth * board.boardHeight) { Tetrominoe.NoShape }
+        }
     }
 })

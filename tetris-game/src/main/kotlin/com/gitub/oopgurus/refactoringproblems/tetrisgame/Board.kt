@@ -7,19 +7,17 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.Timer
 
 
 class Board(
     parent: Tetris,
     private val actionListener: ActionListener,
+    private val gameTimer: GameTimer,
 ) : JPanel() {
-    private var timer: Timer? = null
     private var statusbar: JLabel? = null
 
     val boardWidth = 10
     val boardHeight = 22
-    val periodInterval = 300
     var isFallingFinished = false
     var isPaused = false
     var numLinesRemoved = 0
@@ -56,8 +54,7 @@ class Board(
         curPiece = Shape()
         clearBoard()
         newPiece()
-        timer = Timer(periodInterval, actionListener)
-        timer!!.start()
+        gameTimer.start()
     }
 
     private fun pause() {
@@ -143,7 +140,7 @@ class Board(
         curY = boardHeight - 1 + curPiece!!.minY()
         if (!tryMove(curPiece!!, curX!!, curY!!)) {
             curPiece!!.setShape(Tetrominoe.NoShape)
-            timer!!.stop()
+            gameTimer.stop()
             val msg = String.format("Game over. Score: %d", numLinesRemoved)
             statusbar!!.setText(msg)
         }
@@ -243,14 +240,13 @@ class Board(
 
         if (boardWidth != other.boardWidth) return false
         if (boardHeight != other.boardHeight) return false
-        if (periodInterval != other.periodInterval) return false
         if (isFallingFinished != other.isFallingFinished) return false
         if (isPaused != other.isPaused) return false
         if (numLinesRemoved != other.numLinesRemoved) return false
         if (curX != other.curX) return false
         if (curY != other.curY) return false
         if (curPiece != other.curPiece) return false
-        if (!board.contentEquals(other.board)) return false
+        if (!board.contentDeepEquals(other.board)) return false
 
         return true
     }
@@ -258,7 +254,6 @@ class Board(
     override fun hashCode(): Int {
         var result = boardWidth
         result = 31 * result + boardHeight
-        result = 31 * result + periodInterval
         result = 31 * result + isFallingFinished.hashCode()
         result = 31 * result + isPaused.hashCode()
         result = 31 * result + numLinesRemoved
@@ -270,7 +265,7 @@ class Board(
     }
 
     override fun toString(): String {
-        return "Board(boardWidth=$boardWidth, boardHeight=$boardHeight, periodInterval=$periodInterval, isFallingFinished=$isFallingFinished, isPaused=$isPaused, numLinesRemoved=$numLinesRemoved, curX=$curX, curY=$curY, curPiece=$curPiece, board=${board.contentToString()})"
+        return "Board(boardWidth=$boardWidth, boardHeight=$boardHeight, isFallingFinished=$isFallingFinished, isPaused=$isPaused, numLinesRemoved=$numLinesRemoved, curX=$curX, curY=$curY, curPiece=$curPiece, board=${board.contentToString()})"
     }
 
     internal inner class TAdapter : KeyAdapter() {

@@ -6,7 +6,7 @@ import java.awt.event.ActionListener
 class GameCycle : ActionListener {
     var board: Board? = null
 
-    override fun actionPerformed(e: ActionEvent) {
+    override fun actionPerformed(e: ActionEvent?) {
         board!!.doGameCycle()
     }
 }
