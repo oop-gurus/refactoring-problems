@@ -12,6 +12,7 @@ import javax.swing.JPanel
 class Board(
     parent: Tetris,
     private val gameTimer: GameTimer,
+    private val tetrominoeStream: TetrominoeStream,
 ) : JPanel() {
     private var statusbar: JLabel? = null
 
@@ -134,7 +135,7 @@ class Board(
     }
 
     private fun newPiece() {
-        curPiece!!.setRandomShape()
+        curPiece!!.setShape(tetrominoeStream.next())
         curX = boardWidth / 2 + 1
         curY = boardHeight - 1 + curPiece!!.minY()
         if (!tryMove(curPiece!!, curX!!, curY!!)) {

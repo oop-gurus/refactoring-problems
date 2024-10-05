@@ -26,8 +26,7 @@ class Tetris : JFrame() {
         add(statusBar, BorderLayout.SOUTH)
         val gameCycle = GameCycle()
         val gameTimer = RealTimer(Timer(300, gameCycle))
-
-        val board = Board(this, gameTimer)
+        val board = Board(this, gameTimer, RandomTetrominoeStream)
         gameCycle.board = board
 
         add(board)
