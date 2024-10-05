@@ -121,4 +121,27 @@ class Shape {
         }
         return result
     }
+
+
+    override fun toString(): String {
+        return "Shape(shape=$shape)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Shape
+
+        if (shape != other.shape) return false
+        if (!coords.contentDeepEquals(other.coords)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = shape?.hashCode() ?: 0
+        result = 31 * result + coords.contentDeepHashCode()
+        return result
+    }
 }
