@@ -6,7 +6,6 @@ import io.kotest.matchers.shouldBe
 class BoardTest : StringSpec({
 
     "상태가 서로 같다" {
-        val board = Board(Tetris())
-
+        Board(Tetris()) shouldBe Board(Tetris())
     }
 })
