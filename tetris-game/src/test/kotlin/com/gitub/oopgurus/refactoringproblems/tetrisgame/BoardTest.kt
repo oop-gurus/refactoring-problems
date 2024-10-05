@@ -27,7 +27,7 @@ class BoardTest : StringSpec({
         board.board contentDeepEquals Array(board.boardWidth * board.boardHeight) { Tetrominoe.NoShape }
     }
 
-    "시간이 조금 흘렀을 때" {
+    "시간이 1 tick 흘렀을 때" {
         // 시간이 흐르고
         // ??? timer = Timer?
 
